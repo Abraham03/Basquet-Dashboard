@@ -1,131 +1,75 @@
 <?php
-/**
- * Clase MatchRepository
- * Responsabilidad: Manejar la lógica de guardado y sincronización de partidos.
- * Usa Transacciones ACID para asegurar la integridad de datos.
- */
-class MatchRepository {
-    private mysqli $db;
+// src/MatchRepository.php
 
-    public function __construct() {
-        $this->db = Database::getConnection();
+class MatchRepository {
+    private $db;
+
+    public function __construct(Database $db) {
+        $this->db = $db->getConnection();
     }
 
     /**
-     * Sincroniza un partido completo (MatchState) desde la App a la BD.
-     * @param array $data El JSON decodificado que envió Flutter.
+     * Sincroniza el partido completo de forma atómica.
      */
-    public function syncMatch(array $data): void {
-        // 1. INICIAR TRANSACCIÓN: Todo se guarda o nada se guarda.
-        $this->db->begin_transaction();
-
+    public function syncMatch(array $data) {
         try {
-            // A. Guardar/Actualizar la cabecera del partido
-            $this->upsertMatch($data);
-            
-            // B. ESTRATEGIA DE LIMPIEZA:
-            // Borramos los detalles anteriores para evitar duplicados y 
-            // volvemos a insertar el estado actual exacto de la App.
-            $this->deleteRelatedData($data['matchId']);
-            
-            // C. Insertar Logs (Puntos punto a punto)
-            if (!empty($data['scoreLog'])) {
-                $this->insertScoreLogs($data['matchId'], $data['scoreLog']);
-            }
-            
-            // D. Insertar Resumen por Periodos
-            if (!empty($data['periodScores'])) {
-                $this->insertPeriodScores($data['matchId'], $data['periodScores']);
-            }
-            
-            // E. Insertar Estadísticas de Jugadores
-            if (!empty($data['playerStats'])) {
-                $this->insertPlayerStats($data['matchId'], $data['playerStats']);
+            // 1. Iniciar Transacción (ACID)
+            $this->db->beginTransaction();
+
+            // 2. Insertar o Actualizar Cabecera del Partido (Upsert)
+            // Guardamos signature_base64 directamente en signature_data
+            $sqlMatch = "INSERT INTO matches 
+                (id, team_a_name, team_b_name, score_a, score_b, status, signature_data, updated_at)
+                VALUES (:id, :ta_name, :tb_name, :sa, :sb, 'FINISHED', :sig, NOW())
+                ON DUPLICATE KEY UPDATE 
+                score_a = VALUES(score_a), 
+                score_b = VALUES(score_b), 
+                status = 'FINISHED', 
+                signature_data = VALUES(signature_data),
+                updated_at = NOW()";
+
+            $stmt = $this->db->prepare($sqlMatch);
+            $stmt->execute([
+                ':id' => $data['match_id'],
+                ':ta_name' => $data['team_a_name'],
+                ':tb_name' => $data['team_b_name'],
+                ':sa' => $data['score_a'],
+                ':sb' => $data['score_b'],
+                ':sig' => $data['signature_base64'] ?? null // Guardamos el Base64 directo
+            ]);
+
+            // 3. Reemplazar Eventos (Log del partido)
+            // Primero borramos los anteriores para evitar duplicados si se re-sincroniza
+            $delStmt = $this->db->prepare("DELETE FROM score_logs WHERE match_id = :mid");
+            $delStmt->execute([':mid' => $data['match_id']]);
+
+            if (!empty($data['events'])) {
+                // Usamos prepared statement una vez y lo ejecutamos múltiples veces (Más eficiente)
+                $sqlEvent = "INSERT INTO score_logs (match_id, period, team_id, player_number, points, event_type, created_at) 
+                             VALUES (:mid, :per, :tid, :pnum, :pts, :type, NOW())";
+                $stmtEvent = $this->db->prepare($sqlEvent);
+
+                foreach ($data['events'] as $event) {
+                    $stmtEvent->execute([
+                        ':mid' => $data['match_id'],
+                        ':per' => $event['period'],
+                        ':tid' => $event['team_id'], 
+                        ':pnum' => $event['player_number'],
+                        ':pts' => $event['points'],
+                        ':type' => $event['type'] ?? 'POINT'
+                    ]);
+                }
             }
 
-            // 2. CONFIRMAR TRANSACCIÓN (Guardar cambios permanentemente)
+            // 4. Confirmar cambios
             $this->db->commit();
+            return ['success' => true, 'message' => 'Partido sincronizado correctamente'];
+
         } catch (Exception $e) {
-            // 3. REVERTIR TRANSACCIÓN (Si algo falla, la BD queda intacta como estaba antes)
-            $this->db->rollback();
-            throw $e; // Re-lanzamos el error para que el Controller responda con error 500
-        }
-    }
-
-    // --- Métodos Privados (Helpers SQL) ---
-
-    private function upsertMatch(array $data): void {
-        // INSERT ... ON DUPLICATE KEY UPDATE: Si el ID existe, actualiza; si no, inserta.
-        $sql = "INSERT INTO matches (
-                    id, tournament_id, venue_id, team_a_id, team_b_id, 
-                    team_a_name, team_b_name, score_a, score_b, 
-                    current_period, time_left, status, 
-                    match_date, main_referee, aux_referee, scorekeeper
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    score_a = VALUES(score_a),
-                    score_b = VALUES(score_b),
-                    current_period = VALUES(current_period),
-                    time_left = VALUES(time_left),
-                    status = VALUES(status),
-                    updated_at = NOW()";
-
-        // Usamos Prepared Statements para prevenir Inyección SQL
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param(
-            "siiiissiiissssss", // Tipos de datos (s=string, i=int)
-            $data['matchId'], $data['tournamentId'], $data['venueId'],
-            $data['teamAId'], $data['teamBId'], $data['teamAName'], $data['teamBName'],
-            $data['scoreA'], $data['scoreB'], $data['currentPeriod'], $data['timeLeft'],
-            $data['status'], $data['matchDate'], $data['mainReferee'], $data['auxReferee'],
-            $data['scorekeeper']
-        );
-        $stmt->execute();
-    }
-
-    private function deleteRelatedData(string $matchId): void {
-        $id = $this->db->real_escape_string($matchId);
-        // Borramos hijos en orden inverso
-        $this->db->query("DELETE FROM score_logs WHERE match_id = '$id'");
-        $this->db->query("DELETE FROM period_scores WHERE match_id = '$id'");
-        $this->db->query("DELETE FROM match_player_stats WHERE match_id = '$id'");
-    }
-
-    private function insertScoreLogs(string $matchId, array $logs): void {
-        $stmt = $this->db->prepare("INSERT INTO score_logs (match_id, period, team_id, team_side, player_id, player_name, player_number, points_scored, score_after) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
-        foreach ($logs as $log) {
-            $stmt->bind_param(
-                "siisssiii",
-                $matchId, $log['period'], $log['teamId'], $log['teamSide'],
-                $log['playerId'], $log['playerName'], $log['playerNumber'],
-                $log['points'], $log['scoreAfter']
-            );
-            $stmt->execute();
-        }
-    }
-
-    private function insertPeriodScores(string $matchId, array $periodScores): void {
-        $stmt = $this->db->prepare("INSERT INTO period_scores (match_id, period_number, score_a, score_b) VALUES (?, ?, ?, ?)");
-        
-        foreach ($periodScores as $periodNum => $scores) {
-            // $scores viene como array simple [puntosA, puntosB]
-            $stmt->bind_param("siii", $matchId, $periodNum, $scores[0], $scores[1]);
-            $stmt->execute();
-        }
-    }
-
-    private function insertPlayerStats(string $matchId, array $stats): void {
-        $stmt = $this->db->prepare("INSERT INTO match_player_stats (match_id, team_id, player_id, player_name, player_number, team_side, total_points, total_fouls) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        
-        foreach ($stats as $stat) {
-            $stmt->bind_param(
-                "siissiii",
-                $matchId, $stat['teamId'], $stat['playerId'],
-                $stat['name'], $stat['number'], $stat['teamSide'],
-                $stat['points'], $stat['fouls']
-            );
-            $stmt->execute();
+            // Si algo falla, revertimos todo
+            $this->db->rollBack();
+            error_log("Sync Error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error en servidor: ' . $e->getMessage()];
         }
     }
 }
