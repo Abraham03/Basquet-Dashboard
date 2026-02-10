@@ -2,44 +2,50 @@
 /**
  * Clase Database
  * Patrón: Singleton
- * Responsabilidad: Gestionar una única conexión a MySQL para toda la solicitud.
+ * Responsabilidad: Gestionar la conexión a MySQL.
  */
 class Database {
-    // Propiedad estática para guardar la instancia única
-    private static ?mysqli $connection = null;
+    private static ?Database $instance = null;
+    private mysqli $connection;
 
-    // Constructor privado para evitar que se haga "new Database()" desde fuera
-    private function __construct() {}
+    // Constructor privado: Se conecta al instanciarse
+    private function __construct() {
+        try {
+            $this->connection = new mysqli(
+                DatabaseConfig::DB_HOST, 
+                DatabaseConfig::DB_USER, 
+                DatabaseConfig::DB_PASS, 
+                DatabaseConfig::DB_NAME
+            );
 
-    /**
-     * Obtiene la conexión activa o crea una nueva si no existe.
-     * @return mysqli Objeto de conexión nativo de PHP.
-     */
-    public static function getConnection(): mysqli {
-        if (self::$connection === null) {
-            try {
-                // Intenta conectar usando las constantes de configuración
-                self::$connection = new mysqli(
-                    DatabaseConfig::DB_HOST, 
-                    DatabaseConfig::DB_USER, 
-                    DatabaseConfig::DB_PASS, 
-                    DatabaseConfig::DB_NAME
-                );
-
-                // Verificar si hubo error
-                if (self::$connection->connect_error) {
-                    throw new Exception("Error de conexión: " . self::$connection->connect_error);
-                }
-
-                // Asegurar que los caracteres especiales (tildes, ñ) se guarden bien
-                self::$connection->set_charset("utf8mb4");
-
-            } catch (Exception $e) {
-                // Si falla, detenemos todo y devolvemos error 500
-                Response::json(['status' => 'error', 'message' => 'Database connection error'], 500);
+            if ($this->connection->connect_error) {
+                throw new Exception("Error de conexión: " . $this->connection->connect_error);
             }
+
+            $this->connection->set_charset("utf8mb4");
+
+        } catch (Exception $e) {
+            // Respuesta JSON directa en caso de error crítico de BD
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+            exit;
         }
-        return self::$connection;
     }
+
+    // Método estático para obtener LA instancia de la clase Database
+    public static function getInstance(): Database {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    // Método público para obtener la conexión mysqli (usado por los repos)
+    public function getConnection(): mysqli {
+        return $this->connection;
+    }
+    
+    // Evitar clonación
+    private function __clone() {}
 }
 ?>
