@@ -3,11 +3,13 @@
  * Clase ApiController
  * Responsabilidad: Recibir peticiones HTTP, validar inputs y dirigir al repositorio correcto.
  */
-class ApiController {
+class ApiController
+{
     private CatalogRepository $catalogRepo;
     private MatchRepository $matchRepo;
 
-    public function __construct() {
+    public function __construct()
+    {
         // 1. Obtener instancia Singleton de la BD
         $this->logFile = dirname(__DIR__) . '/debug_controller.txt';
         $this->log("------------------------------------------------");
@@ -16,7 +18,7 @@ class ApiController {
             // Intentar conectar a la BD
             $this->log("2. Intentando obtener instancia de Database...");
             $database = Database::getInstance();
-            
+
             // Verificar si la conexión es válida
             if ($database->getConnection()->connect_error) {
                 $this->log("ERROR FATAL: Conexión fallida: " . $database->getConnection()->connect_error);
@@ -33,17 +35,19 @@ class ApiController {
             // No detenemos aquí para permitir que handleRequest devuelva el error JSON
         }
     }
-    
-    private function log($msg) {
+
+    private function log($msg)
+    {
         // Escribir en el archivo de log con fecha/hora
         file_put_contents($this->logFile, date('H:i:s') . " - " . $msg . "\n", FILE_APPEND);
     }
 
-    public function handleRequest(): void {
+    public function handleRequest(): void
+    {
         $method = $_SERVER['REQUEST_METHOD'];
         $action = $_GET['action'] ?? null;
 
-$this->log("5. HandleRequest: Método [$method] - Acción [$action]");
+        $this->log("5. HandleRequest: Método [$method] - Acción [$action]");
 
         try {
             if ($method === 'GET') {
@@ -60,7 +64,8 @@ $this->log("5. HandleRequest: Método [$method] - Acción [$action]");
         }
     }
 
-    private function handleGet(?string $action): void {
+    private function handleGet(?string $action): void
+    {
         $this->log("6. Procesando GET...");
         switch ($action) {
             case 'get_data':
@@ -68,13 +73,26 @@ $this->log("5. HandleRequest: Método [$method] - Acción [$action]");
                 Response::json(['status' => 'success', 'data' => $data]);
                 break;
             
+            case 'get_tournament_data':
+                $tournamentId = $_GET['tournament_id'] ?? null;
+                
+                if (!$tournamentId) {
+                    Response::json(['status' => 'error', 'message' => 'Tournament ID required'], 400);
+                    return;
+                }
+
+                $data = $this->catalogRepo->getTournamentData((int)$tournamentId);
+                Response::json(['status' => 'success', 'data' => $data]);
+                break;    
+
             default:
                 Response::json(['status' => 'ok', 'message' => 'Basketball API v3.0 Running']);
                 break;
         }
     }
 
-    private function handlePost(?string $action): void {
+    private function handlePost(?string $action): void
+    {
         $this->log("6. Procesando POST...");
         // Leer el cuerpo JSON
         $inputJSON = file_get_contents('php://input');
@@ -108,20 +126,36 @@ $this->log("5. HandleRequest: Método [$method] - Acción [$action]");
                 }
                 break;
 
-            // --- CASO 2: CREAR EQUIPO ---
+                 // --- CASO 2: CREAR EQUIPO ---
             case 'create_team':
+                // Validar nombre obligatorio
+                $this->log("Entrando a case 'create team'");
                 if (empty($input['name'])) {
                     Response::json(['status' => 'error', 'message' => 'Team name is required'], 400);
                     return;
                 }
-                
-                $newId = $this->catalogRepo->createTeam(
-                    $input['name'], 
-                    $input['shortName'] ?? '', 
+                $this->log("Llamando a CatalogRepository->create team...");
+                // 1. Crear el equipo en la tabla 'teams' (SIN tournament_id)
+                $newTeamId = $this->catalogRepo->createTeam(
+                    $input['name'],
+                    $input['shortName'] ?? '',
                     $input['coachName'] ?? ''
                 );
-                
-                Response::json(['status' => 'success', 'message' => 'Team created', 'newId' => $newId]);
+                $this->log("Resultado del Repo: " . print_r($newTeamId, true));
+                // 2. Vincular al torneo SI se envió el ID
+                // Verificamos si tournament_id viene en el JSON y no está vacío
+                if (!empty($input['tournament_id'])) {
+                    $this->catalogRepo->attachTeamToTournament(
+                        (int)$newTeamId, 
+                        (int)$input['tournament_id']
+                    );
+                }
+
+                Response::json([
+                    'status' => 'success', 
+                    'message' => 'Team created successfully', 
+                    'newId' => $newTeamId
+                ]);
                 break;
 
             // --- CASO 3: AGREGAR JUGADOR ---
@@ -132,13 +166,27 @@ $this->log("5. HandleRequest: Método [$method] - Acción [$action]");
                 }
 
                 $newId = $this->catalogRepo->createPlayer(
-                    (int)$input['teamId'],
+                    (int) $input['teamId'],
                     $input['name'],
-                    (int)($input['number'] ?? 0)
+                    (int) ($input['number'] ?? 0)
                 );
 
                 Response::json(['status' => 'success', 'message' => 'Player added', 'newId' => $newId]);
-                break; 
+                break;
+
+            case 'create_tournament':
+                if (empty($input['name'])) {
+                    Response::json(['status' => 'error', 'message' => 'Tournament name is required'], 400);
+                    return;
+                }
+                
+                $newId = $this->catalogRepo->createTournament(
+                    $input['name'],
+                    $input['category'] ?? 'Libre'
+                );
+
+                Response::json(['status' => 'success', 'message' => 'Tournament created', 'newId' => $newId]);
+                break;   
 
             default:
                 Response::json(['status' => 'error', 'message' => 'Unknown POST action: ' . $action], 400);
