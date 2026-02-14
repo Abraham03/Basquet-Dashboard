@@ -16,6 +16,7 @@ class CatalogRepository {
      * @return array Array con torneos, sedes, equipos y jugadores.
      */
     public function getAllCatalogs(): array {
+         Logger::write("CatalogRepository: Obteniendo todos los catálogos");
         return [
             // Solo torneos activos
             'tournaments' => $this->fetchAll("SELECT * FROM tournaments WHERE status='ACTIVE'"),
@@ -26,46 +27,14 @@ class CatalogRepository {
             'tournament_teams' => $this->fetchAll("SELECT tournament_id, team_id FROM tournament_teams")
         ];
     }
-
-    /**
-     * Helper privado para ejecutar un SELECT y devolver un array asociativo.
-     */
-    private function fetchAll(string $query): array {
-        $result = $this->db->query($query);
-        // fetch_all(MYSQLI_ASSOC) devuelve un array limpio de PHP
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
     
     
-public function createTournament($name, $category) {
-    $stmt = $this->db->prepare("INSERT INTO tournaments (name, category) VALUES (?, ?)");
-    return $stmt->execute([$name, $category]);
-}
-
-// Asegúrate de actualizar createTeam para recibir tournament_id si tu BD lo soporta
-public function createTeam($name, $shortName, $coach) {
-    // Asumiendo que agregaste la columna tournament_id a la tabla teams
-    $sql = "INSERT INTO teams (name, short_name, coach_name) VALUES (?, ?, ?)";
-    $stmt = $this->db->prepare($sql);
-    if ($stmt->execute([$name, $shortName, $coach])) {
-            // CORRECCIÓN: Devolver el ID generado, no el resultado de execute()
-            return $stmt->insert_id; 
-        }
-        return 0; // O lanzar excepción si falló
-}
-
-    public function createPlayer(int $teamId, string $name, int $number): int {
-        $stmt = $this->db->prepare("INSERT INTO players (team_id, name, default_number, active) VALUES (?, ?, ?, 1)");
-        $stmt->bind_param("isi", $teamId, $name, $number);
-        $stmt->execute();
-        return $stmt->insert_id; // Devuelve el ID del nuevo jugador
-    }
-    
-    /**
+        /**
      * Obtiene datos específicos de un torneo seleccionado.
      * Filtra equipos y jugadores usando la tabla intermedia tournament_teams.
      */
     public function getTournamentData(int $tournamentId): array {
+        Logger::write("CatalogRepository: Obteniendo datos del torneo ID: $tournamentId");
         return [
             // 1. Partidos solo de este torneo
             'matches' => $this->fetchAll(
@@ -92,14 +61,46 @@ public function createTeam($name, $shortName, $coach) {
         ];
     }
     
-    /**
-     * Método auxiliar para registrar un equipo en un torneo (Llamar al crear equipo)
-     */
-    public function attachTeamToTournament(int $teamId, int $tournamentId): void {
-        $stmt = $this->db->prepare("INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?, ?)");
-        $stmt->bind_param("ii", $tournamentId, $teamId);
-        $stmt->execute();
+    // 1. Solo lista de torneos (Para el select del dashboard)
+    public function getTournamentsList(): array {
+        return $this->fetchAll("SELECT id, name, category FROM tournaments ORDER BY id DESC");
     }
+
+    // 2. Datos filtrados por torneo (Para las tablas del dashboard)
+    public function getDataByTournament($tournamentId): array {
+        $sqlTeams = "SELECT t.* FROM teams t";
+        $sqlPlayers = "SELECT p.* FROM players p WHERE p.active = 1";
+
+        // Si hay un torneo seleccionado, filtramos
+        if ($tournamentId > 0) {
+            $sqlTeams = "SELECT t.* FROM teams t 
+                         INNER JOIN tournament_teams tt ON t.id = tt.team_id 
+                         WHERE tt.tournament_id = $tournamentId";
+            
+            // Jugadores que pertenecen a equipos de este torneo
+            // Nota: Si un jugador está en un equipo, y ese equipo está en el torneo, mostramos al jugador.
+            // Opcional: Si quieres ser más estricto, podrías filtrar más, pero esto suele bastar.
+            $sqlPlayers = "SELECT p.* FROM players p 
+                           INNER JOIN teams t ON p.team_id = t.id 
+                           INNER JOIN tournament_teams tt ON t.id = tt.team_id 
+                           WHERE tt.tournament_id = $tournamentId AND p.active = 1";
+        }
+
+        return [
+            'teams' => $this->fetchAll($sqlTeams),
+            'players' => $this->fetchAll($sqlPlayers)
+        ];
+    }
+
+    /**
+     * Helper privado para ejecutar un SELECT y devolver un array asociativo.
+     */
+    private function fetchAll(string $query): array {
+        $result = $this->db->query($query);
+        // fetch_all(MYSQLI_ASSOC) devuelve un array limpio de PHP
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
     
 }
 ?>

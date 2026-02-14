@@ -1,21 +1,26 @@
 <?php
-/**
- * Bootstrap
- * Responsabilidad: Cargar todos los archivos necesarios en el orden correcto.
- * Esto evita usar Composer si tu hosting es limitado.
- */
-
-// Cargar Configuración
+// 1. Cargar Configuración
 require_once __DIR__ . '/config/DatabaseConfig.php';
+require_once __DIR__ . '/src/Controller/Api/AuthController.php'; // <--- AGREGAR ESTO
 
-// Cargar Core
-require_once __DIR__ . '/src/Response.php';
-require_once __DIR__ . '/src/Database.php';
+// 2. Autoloader (Carga clases automáticamente)
+spl_autoload_register(function ($className) {
+    $baseDir = __DIR__ . '/src/';
+    $folders = [
+        '',                     // 
+        'Controller/Api/',
+        'Controller/Web/',
+        'Repository/',        // Repositories/
+        'Utils/',
+        'assets/team_logo'// Utils/
+    ];
 
-// Cargar Repositorios
-require_once __DIR__ . '/src/CatalogRepository.php';
-require_once __DIR__ . '/src/MatchRepository.php';
-
-// Cargar Controlador
-require_once __DIR__ . '/src/ApiController.php';
+    foreach ($folders as $folder) {
+        $file = $baseDir . $folder . $className . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
+});
 ?>

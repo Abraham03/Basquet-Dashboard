@@ -10,10 +10,8 @@ class MatchRepository {
     }
 
     public function syncMatch(array $data) {
+        Logger::write("MatchRepository: Iniciando Sincronización para Match ID: $matchId");
         $logFile = __DIR__ . '/debug_payload_full.txt';
-        
-        file_put_contents($logFile, "=== INICIO REQUEST: " . date('Y-m-d H:i:s') . " ===\n");
-        file_put_contents($logFile, "DATA COMPLETA:\n" . print_r($data, true) . "\n", FILE_APPEND);
 
         try {
             if (!$this->db) {
@@ -78,7 +76,7 @@ class MatchRepository {
 
             $stmt->execute();
             $stmt->close(); 
-            file_put_contents($logFile, "Match INSERT ejecutado OK.\n", FILE_APPEND);
+            Logger::write("MatchRepository: Cabecera del partido guardada/actualizada OK.");
 
             // ---------------------------------------------------------
             // 2. Reemplazar Eventos
@@ -89,6 +87,7 @@ class MatchRepository {
             $delStmt->close();
 
             if (!empty($data['events']) && is_array($data['events'])) {
+                Logger::write("MatchRepository: Procesando $countEvents eventos...");
                 $sqlEvent = "INSERT INTO score_logs 
                             (match_id, period, team_id, team_side, player_id, player_name, player_number, points_scored, score_after, created_at) 
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
@@ -127,19 +126,19 @@ class MatchRepository {
                     $stmtEvent->execute();
                 }
                 $stmtEvent->close();
-                file_put_contents($logFile, "Eventos insertados con PLAYER_ID: " . count($data['events']) . "\n", FILE_APPEND);
             }
 
             $this->db->commit();
-            file_put_contents($logFile, "TRANSACCIÓN EXITOSA.\n", FILE_APPEND);
-            
+            Logger::write("MatchRepository: Transacción COMPLETADA con éxito.");
+
             return ['status' => 'success', 'message' => 'Sincronizado'];
 
         } catch (\Throwable $e) {
             if ($this->db) { try { $this->db->rollback(); } catch (\Throwable $t) {} }
             
             $errorMsg = "ERROR FATAL: " . $e->getMessage() . "\nLínea: " . $e->getLine();
-            file_put_contents($logFile, $errorMsg, FILE_APPEND);
+            Logger::write("MatchRepository ERROR FATAL: " . $e->getMessage());
+            Logger::write("En archivo: " . $e->getFile() . " Línea: " . $e->getLine());
             throw $e;
         }
     }

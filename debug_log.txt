@@ -1,0 +1,1121 @@
+[2026-02-13 21:43:00] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:43:00] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:43:05] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:51:35] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:51:35] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:52:07] Petición Recibida: [POST] action=admin_login | DATA: Array
+(
+    [user] => Admin
+    [pass] => password
+)
+
+-----------------------------------
+[2026-02-13 21:52:07] Petición Recibida: [GET] action=get_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:52:07] CatalogRepository: Obteniendo todos los catálogos
+-----------------------------------
+[2026-02-13 21:56:45] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:56:45] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:03] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:13] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:29] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:34] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:41] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 4
+)
+
+-----------------------------------
+[2026-02-13 21:58:41] TeamRepository: Vinculando Equipo 1 al Torneo 4
+-----------------------------------
+[2026-02-13 21:58:41] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:58:43] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:59:24] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 21:59:59] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:03] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:07] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:00:07] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:00:07] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:00:07] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:00:08] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:11] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:11] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:14] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:00:35] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:00:35] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:00:35] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:00:35] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:00:36] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:01:08] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:01:16] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 39
+)
+
+-----------------------------------
+[2026-02-13 22:01:17] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:01:20] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:01:20] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:01:20] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:01:20] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:01:20] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:02:35] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:02:35] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:02:35] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:02:35] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:02:35] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:03:07] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:03:07] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:03:07] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:03:07] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:03:07] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:04:49] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:04:54] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:04:54] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:04:54] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:04:54] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:04:54] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:05:02] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 5
+)
+
+-----------------------------------
+[2026-02-13 22:05:02] TeamRepository: Vinculando Equipo 1 al Torneo 5
+-----------------------------------
+[2026-02-13 22:05:02] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:05:05] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:05:08] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:05:08] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:05:08] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 54
+-----------------------------------
+[2026-02-13 22:05:08] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(54): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(59): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:05:08] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:14:42] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:14:42] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:14:47] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:14:53] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:14:53] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:14:53] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 60
+-----------------------------------
+[2026-02-13 22:14:53] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(60): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(70): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:14:53] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:18:15] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:18:15] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:18:30] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:18:33] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:18:33] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:18:33] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 60
+-----------------------------------
+[2026-02-13 22:18:33] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(60): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(70): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:18:33] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-13 22:18:42] Petición Recibida: [POST] action=delete_team | DATA: Array
+(
+    [id] => 1
+)
+
+-----------------------------------
+[2026-02-13 22:18:42] EXCEPCIÓN CRÍTICA: Cannot delete or update a parent row: a foreign key constraint fails (`u525153682_BasquebolApp`.`matches`, CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`team_b_id`) REFERENCES `teams` (`id`))
+-----------------------------------
+[2026-02-13 22:18:42] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 60
+-----------------------------------
+[2026-02-13 22:18:42] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(60): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(70): TeamRepository->delete()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(70): TeamController->delete()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#4 {main}
+-----------------------------------
+[2026-02-13 22:18:42] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:45:27] Petición Recibida: [GET] action=get_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:45:27] CatalogRepository: Obteniendo todos los catálogos
+-----------------------------------
+[2026-02-14 07:45:27] Petición Recibida: [GET] action=get_dashboard_stats | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:08] Petición Recibida: [POST] action=admin_login | DATA: Array
+(
+    [user] => Admin
+    [pass] => password
+)
+
+-----------------------------------
+[2026-02-14 07:47:08] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:08] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:23] Petición Recibida: [GET] action=admin_logout | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:41] Petición Recibida: [POST] action=admin_login | DATA: Array
+(
+    [user] => Admin
+    [pass] => password
+)
+
+-----------------------------------
+[2026-02-14 07:47:41] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:41] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:47:51] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:48:05] Petición Recibida: [POST] action=delete_tournament | DATA: Array
+(
+    [id] => 8
+)
+
+-----------------------------------
+[2026-02-14 07:48:05] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:48:05] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 07:48:22] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:16:36] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:16:36] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:16:50] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:16:50] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:17:11] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:17:14] Petición Recibida: [POST] action=detach_team | DATA: Array
+(
+    [id] => 6
+    [tournament_id] => 3
+)
+
+-----------------------------------
+[2026-02-14 09:17:14] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:17:41] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:18:54] Petición Recibida: [POST] action=detach_team | DATA: Array
+(
+    [id] => 1
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:18:54] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:19:00] Petición Recibida: [POST] action=detach_team | DATA: Array
+(
+    [id] => 6
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:19:00] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:19:52] Petición Recibida: [POST] action=create_team | DATA: Array
+(
+    [id] => 
+    [name] => Dextho Feria Ixmiquilpan
+    [shortName] => DXTO F
+    [coachName] => Abraham C.
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:19:52] TeamRepository: Crando equipo Dextho Feria Ixmiquilpan
+-----------------------------------
+[2026-02-14 09:19:52] TeamRepository: Crado con exito equipo Dextho Feria Ixmiquilpan
+-----------------------------------
+[2026-02-14 09:19:52] TeamRepository: Vinculando Equipo 54 al Torneo 6
+-----------------------------------
+[2026-02-14 09:19:52] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:20:27] Petición Recibida: [POST] action=add_player | DATA: Array
+(
+    [id] => 
+    [name] => Abraham CHavez
+    [number] => 3
+    [teamId] => 54
+)
+
+-----------------------------------
+[2026-02-14 09:20:27] PlayerRepository: Insertndo nuevo jugador
+-----------------------------------
+[2026-02-14 09:20:27] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:20:46] Petición Recibida: [POST] action=add_player | DATA: Array
+(
+    [id] => 
+    [name] => Ivan Guerrero
+    [number] => 22
+    [teamId] => 54
+)
+
+-----------------------------------
+[2026-02-14 09:20:46] PlayerRepository: Insertndo nuevo jugador
+-----------------------------------
+[2026-02-14 09:20:46] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:22:35] Petición Recibida: [GET] action=get_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:22:35] CatalogRepository: Obteniendo todos los catálogos
+-----------------------------------
+[2026-02-14 09:22:35] Petición Recibida: [GET] action=get_dashboard_stats | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:25:51] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:25:51] TeamRepository: Vinculando Equipo 54 al Torneo 6
+-----------------------------------
+[2026-02-14 09:25:51] EXCEPCIÓN CRÍTICA: Duplicate entry '6-54' for key 'PRIMARY'
+-----------------------------------
+[2026-02-14 09:25:51] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 33
+-----------------------------------
+[2026-02-14 09:25:51] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(33): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(47): TeamRepository->attachTeamToTournament()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(51): TeamRepository->updateTeamTournament()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(59): TeamController->update()
+#4 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#5 {main}
+-----------------------------------
+[2026-02-14 09:26:23] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:26:23] TeamRepository: Vinculando Equipo 54 al Torneo 6
+-----------------------------------
+[2026-02-14 09:26:23] EXCEPCIÓN CRÍTICA: Duplicate entry '6-54' for key 'PRIMARY'
+-----------------------------------
+[2026-02-14 09:26:23] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 33
+-----------------------------------
+[2026-02-14 09:26:23] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(33): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(47): TeamRepository->attachTeamToTournament()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(51): TeamRepository->updateTeamTournament()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(59): TeamController->update()
+#4 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#5 {main}
+-----------------------------------
+[2026-02-14 09:26:58] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 09:26:58] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 09:27:33] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 6
+)
+
+-----------------------------------
+[2026-02-14 09:27:33] TeamRepository: Vinculando Equipo 54 al Torneo 6
+-----------------------------------
+[2026-02-14 09:27:33] EXCEPCIÓN CRÍTICA: Duplicate entry '6-54' for key 'PRIMARY'
+-----------------------------------
+[2026-02-14 09:27:33] Archivo: /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php Línea: 33
+-----------------------------------
+[2026-02-14 09:27:33] Trace: #0 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(33): mysqli_stmt->execute()
+#1 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Repository/TeamRepository.php(47): TeamRepository->attachTeamToTournament()
+#2 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Controller/Api/TeamController.php(51): TeamRepository->updateTeamTournament()
+#3 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/src/Router.php(59): TeamController->update()
+#4 /home/u525153682/domains/techsolutions.management/public_html/apps/BasquetPro/api.php(10): Router->handleRequest()
+#5 {main}
+-----------------------------------
+[2026-02-14 09:31:39] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:13:37] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:13:37] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:14:14] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:14:27] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:15:10] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:16:19] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:16:19] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:16:38] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:16:38] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:16:47] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:16:53] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:17:33] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:17:33] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:17:49] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:17:49] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:20:40] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:20:40] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:20:47] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:20:47] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:21:34] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:21:34] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:21:41] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:21:47] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 10:21:47] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:26:18] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:26:18] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:26:21] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:27:15] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:27:15] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 10:27:36] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:13:16] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:13:16] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:14:07] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:14:07] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:14:32] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 2
+    [name] => Lakers de LA
+    [shortName] => LA
+    [coachName] => Pat Riley
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:14:32] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:14:46] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 2
+    [name] => Lakers de LA
+    [shortName] => LA
+    [coachName] => Pat Riley
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:14:47] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:15:26] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:15:26] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:15:41] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:15:42] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:17:52] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:17:52] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:18:22] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:18:35] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:18:35] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:18:39] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:18:50] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:18:50] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:19:49] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:19:49] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:19:51] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:20:01] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:20:01] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:20:55] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:20:55] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:20:58] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:21:06] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 54
+    [name] => Dexthi FC
+    [shortName] => DXT
+    [coachName] => Abraham C.
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:21:06] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:21:58] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:26:04] Petición Recibida: [POST] action=update_team | DATA: Array
+(
+    [id] => 1
+    [name] => Toros de Chicago
+    [shortName] => CHI
+    [coachName] => Phil Jackson
+    [tournament_id] => 
+)
+
+-----------------------------------
+[2026-02-14 11:26:04] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:26:31] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:26:31] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:31:33] Petición Recibida: [GET] action=get_tournaments_list | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:31:33] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:32:27] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-02-14 11:32:42] Petición Recibida: [GET] action=get_data_by_tournament | DATA: Array
+(
+)
+
+-----------------------------------

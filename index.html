@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basket Pro | Analytics</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #FF5722;
+            --primary-dark: #E64A19;
+            --bg-body: #F3F4F6;
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            padding-bottom: 40px;
+        }
+
+        /* Navbar */
+        .navbar-glass {
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 1rem 0;
+        }
+        .brand-logo {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text-dark);
+            font-size: 1.25rem;
+        }
+
+        /* Tarjetas */
+        .stat-card {
+            background: white;
+            border: none;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            height: 100%;
+            transition: transform 0.2s ease;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+
+        .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); margin-top: 0.25rem; }
+        .kpi-icon { 
+            width: 48px; height: 48px; 
+            border-radius: 12px; 
+            background: rgba(255, 87, 34, 0.1); 
+            color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Tablas */
+        .table-pro { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
+        .table-pro thead th {
+            font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
+            font-weight: 600; border: none; padding: 0.75rem 1rem;
+        }
+        .table-pro tbody tr { background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: all 0.2s; }
+        .table-pro tbody tr:hover { transform: scale(1.005); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .table-pro td { padding: 1rem; vertical-align: middle; border: 1px solid #f3f4f6; border-left: none; border-right: none; }
+        .table-pro td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-left: 1px solid #f3f4f6; }
+        .table-pro td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-right: 1px solid #f3f4f6; }
+
+        .team-avatar {
+            width: 32px; height: 32px;
+            background: #E5E7EB; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.8rem; color: var(--text-muted);
+            margin-right: 0.75rem;
+        }
+
+        .custom-select {
+            border: 1px solid #E5E7EB; border-radius: 8px; padding: 0.5rem 1rem;
+            font-weight: 500; min-width: 250px; background-color: #F9FAFB;
+        }
+        
+        .section-header { margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar-glass mb-5 sticky-top">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-basket2-fill text-danger fs-3 me-2"></i>
+            <span class="brand-logo">Basket Pro</span>
+        </div>
+        <div>
+            <select id="tournamentSelect" class="form-select custom-select shadow-sm">
+                <option value="" disabled selected>Cargando torneos...</option>
+            </select>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div id="loader" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="mt-3 text-muted fw-medium">Cargando datos...</p>
+    </div>
+
+    <div id="dashboardContent" style="display: none;">
+        
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Partidos Jugados</div>
+                        <div class="kpi-value" id="kpiMatches">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-calendar-check"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Equipos Activos</div>
+                        <div class="kpi-value" id="kpiTeams">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-people"></i></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Promedio Puntos</div>
+                        <div class="kpi-value" id="kpiAvg">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="bi bi-activity"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <div class="stat-card">
+                    <div class="section-header">
+                        <h3 class="section-title">MVP Race (Puntos Totales)</h3>
+                    </div>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="scorersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="stat-card">
+                    <div class="section-header">
+                        <h3 class="section-title">Francotiradores (3 Pts)</h3>
+                    </div>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="triplesChart"></canvas>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #e5e7eb;">
+                            <i class="bi bi-bullseye" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6">
+                <div class="stat-card">
+                    <div class="section-header">
+                        <h3 class="section-title">Intensidad de Juego (Pts por Periodo)</h3>
+                    </div>
+                    <div style="height: 200px;">
+                        <canvas id="periodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="stat-card">
+                    <div class="section-header">
+                        <h3 class="section-title">Muro Defensivo (Menos Pts Recibidos)</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>#</th><th>Equipo</th><th class="text-end">Promedio</th></tr>
+                            </thead>
+                            <tbody id="defenseBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header">
+                    <h3 class="section-title">Tabla General de Posiciones</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table-pro">
+                        <thead>
+                            <tr>
+                                <th width="5%">#</th>
+                                <th>Equipo</th>
+                                <th class="text-center">JG</th>
+                                <th class="text-center">JP</th>
+                                <th class="text-center">PF</th>
+                                <th class="text-center">PC</th>
+                                <th class="text-center">DIF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standingsBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div> 
+</div>
+
+<script>
+    const API_URL = 'https://basket.techsolutions.management/api.php'; 
+    
+    // Variables globales para las gráficas
+    let scorersChart = null;
+    let triplesChart = null;
+    let periodsChart = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadTournaments();
+        document.getElementById('tournamentSelect').addEventListener('change', (e) => loadDashboard(e.target.value));
+    });
+
+    async function loadTournaments() {
+        try {
+            const res = await fetch(`${API_URL}?action=get_data`);
+            const json = await res.json();
+            const select = document.getElementById('tournamentSelect');
+            select.innerHTML = ''; 
+
+            if (json.status === 'success' && json.data.tournaments.length > 0) {
+                json.data.tournaments.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t.id;
+                    option.textContent = t.name;
+                    select.appendChild(option);
+                });
+                loadDashboard(json.data.tournaments[0].id);
+            } else {
+                select.innerHTML = '<option>Sin torneos disponibles</option>';
+                document.getElementById('loader').classList.add('d-none');
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión");
+        }
+    }
+
+    async function loadDashboard(tournamentId) {
+        const loader = document.getElementById('loader');
+        const content = document.getElementById('dashboardContent');
+        
+        loader.classList.remove('d-none');
+        content.style.opacity = '0';
+        content.style.display = 'none';
+
+        try {
+            const res = await fetch(`${API_URL}?action=get_dashboard_stats&tournament_id=${tournamentId}`);
+            const text = await res.text();
+            let json;
+            try { json = JSON.parse(text); } catch(e) { console.error(text); return; }
+
+            if (json.status === 'success') {
+                const data = json.data;
+                
+                // KPIs
+                document.getElementById('kpiMatches').innerText = data.stats.total_matches || 0;
+                document.getElementById('kpiTeams').innerText = data.stats.total_teams || 0;
+                document.getElementById('kpiAvg').innerText = parseFloat(data.stats.avg_points || 0).toFixed(1);
+
+                // Renderizar todo
+                renderScorersChart(data.top_scorers);
+                renderTriplesChart(data.top_triples);
+                renderPeriodsChart(data.periods);
+                renderDefenseTable(data.best_defense);
+                renderStandings(data.standings);
+
+                // Mostrar
+                loader.classList.add('d-none');
+                content.style.display = 'block';
+                setTimeout(() => content.style.opacity = '1', 50);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // --- RENDERIZADORES ---
+
+    function renderStandings(teams) {
+        const tbody = document.getElementById('standingsBody');
+        tbody.innerHTML = '';
+        
+        teams.forEach((t, index) => {
+            const dif = t.point_diff; 
+            const difClass = dif > 0 ? 'text-success' : (dif < 0 ? 'text-danger' : 'text-muted');
+            const difSign = dif > 0 ? '+' : '';
+            
+            const row = `
+                <tr>
+                    <td class="fw-bold text-muted">${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="team-avatar">${t.team.substring(0,2).toUpperCase()}</div>
+                            <span class="fw-bold text-dark">${t.team}</span>
+                        </div>
+                    </td>
+                    <td class="text-center fw-bold">${t.w}</td>
+                    <td class="text-center text-muted">${t.l}</td>
+                    <td class="text-center small">${t.pts_favor}</td>
+                    <td class="text-center small">${t.pts_contra}</td>
+                    <td class="text-center fw-bold ${difClass}">${difSign}${dif}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function renderDefenseTable(teams) {
+        const tbody = document.getElementById('defenseBody');
+        tbody.innerHTML = '';
+        if(!teams) return;
+
+        teams.forEach((t, index) => {
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="fw-bold">${t.team}</td>
+                    <td class="text-end text-success fw-bold">${parseFloat(t.avg_allowed).toFixed(1)} pts</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // --- GRÁFICAS ---
+
+    function renderScorersChart(scorers) {
+        const ctx = document.getElementById('scorersChart').getContext('2d');
+        if (scorersChart) scorersChart.destroy();
+
+        scorersChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: scorers.map(p => p.name.split(' ')[0]),
+                datasets: [{
+                    label: 'Puntos',
+                    data: scorers.map(p => p.total_points),
+                    backgroundColor: '#FF5722',
+                    borderRadius: 6,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function renderTriplesChart(triples) {
+        const ctx = document.getElementById('triplesChart').getContext('2d');
+        if (triplesChart) triplesChart.destroy();
+
+        const colors = ['#1F2937', '#FF5722', '#F59E0B', '#10B981', '#6366F1'];
+
+        triplesChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: triples.map(p => p.name),
+                datasets: [{
+                    data: triples.map(p => p.triples_made),
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } 
+                }
+            }
+        });
+    }
+
+    function renderPeriodsChart(periods) {
+        const ctx = document.getElementById('periodsChart').getContext('2d');
+        if (periodsChart) periodsChart.destroy();
+
+        periodsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: periods.map(p => 'Q' + p.period),
+                datasets: [{
+                    label: 'Puntos Totales',
+                    data: periods.map(p => p.total),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
