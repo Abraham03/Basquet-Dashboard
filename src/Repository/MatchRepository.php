@@ -10,16 +10,17 @@ class MatchRepository {
     }
 
     public function syncMatch(array $data) {
-        Logger::write("MatchRepository: Iniciando Sincronización para Match ID: $matchId");
+        Logger::write("Entrando a SyncMatch MatchRepository");
         $logFile = __DIR__ . '/debug_payload_full.txt';
-
+        
+        $currentTime = Database::now();
+        Logger::write("Current time es $currentTime");
         try {
             if (!$this->db) {
                 throw new Exception("La conexión a la base de datos es NULL.");
             }
 
             $this->db->begin_transaction();
-
             // ---------------------------------------------------------
             // 1. Insertar/Actualizar Partido
             // ---------------------------------------------------------
@@ -27,7 +28,7 @@ class MatchRepository {
                 (id, tournament_id, venue_id, team_a_id, team_b_id, team_a_name, team_b_name, 
                  score_a, score_b, current_period, time_left, status, match_date, 
                  main_referee, aux_referee, scorekeeper, signature_data, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINISHED', ?, ?, ?, ?, ?, NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINISHED', ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 score_a = VALUES(score_a), 
                 score_b = VALUES(score_b), 
@@ -40,7 +41,7 @@ class MatchRepository {
                 aux_referee = VALUES(aux_referee),
                 scorekeeper = VALUES(scorekeeper),
                 signature_data = VALUES(signature_data), 
-                updated_at = NOW()";
+                updated_at = VALUES(updated_at)";
 
             $stmt = $this->db->prepare($sqlMatch);
             
@@ -61,21 +62,23 @@ class MatchRepository {
             $ref2 = $data['aux_referee'] ?? '';
             $scorek = $data['scorekeeper'] ?? '';
             $sig = !empty($data['signature_base64']) ? $data['signature_base64'] : null;
-
+            Logger::write("MatchRepository: Iniciando Sincronización para Match ID: $id");
             // --- CORRECCIÓN AQUÍ ---
             // Tenías 18 caracteres, pero solo hay 16 variables.
             // Cadena correcta (16 chars): s i i i i s s i i i s s s s s s
-            $types = "siiiissiiissssss"; 
+            $types = "siiiissiiisssssss"; 
             
             $stmt->bind_param($types, 
                 $id, $tourn, $venue, $ta_id, $tb_id, 
                 $ta_name, $tb_name, 
                 $sa, $sb, $period, $time, $date,
-                $ref1, $ref2, $scorek, $sig
+                $ref1, $ref2, $scorek, $sig,
+                $currentTime
             );
 
             $stmt->execute();
             $stmt->close(); 
+            Logger::write("La hora actual es $currentTime");
             Logger::write("MatchRepository: Cabecera del partido guardada/actualizada OK.");
 
             // ---------------------------------------------------------
@@ -90,7 +93,7 @@ class MatchRepository {
                 Logger::write("MatchRepository: Procesando $countEvents eventos...");
                 $sqlEvent = "INSERT INTO score_logs 
                             (match_id, period, team_id, team_side, player_id, player_name, player_number, points_scored, score_after, created_at) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
                 $stmtEvent = $this->db->prepare($sqlEvent);
                 
@@ -112,7 +115,7 @@ class MatchRepository {
                     $scoreAfter = (int)$event['score_after'];
 
                     // Tipos: s i i s i s i i i
-                    $stmtEvent->bind_param("siisisiii", 
+                    $stmtEvent->bind_param("siisisiiis", 
                         $id, 
                         $per, 
                         $realTeamId, 
@@ -121,7 +124,8 @@ class MatchRepository {
                         $pName, 
                         $pNum, 
                         $pts, 
-                        $scoreAfter
+                        $scoreAfter,
+                        $currentTime
                     );
                     $stmtEvent->execute();
                 }

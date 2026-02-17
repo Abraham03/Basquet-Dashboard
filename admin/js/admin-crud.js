@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupForms();
 });
 
-// --- LOAD DATA ---
+// --- CARGA DE DATOS ---
 async function loadTournamentsList() {
     try {
         const res = await fetch(`${API_URL}?action=get_tournaments_list`);
@@ -63,12 +63,12 @@ function applyLocalPlayerFilter() {
     renderPlayers(filtered);
 }
 
-// --- RENDER TABLES ---
+// --- RENDERIZADO DE TABLAS ---
 function renderTournaments(list) {
     const tbody = document.getElementById('tableTournaments');
     tbody.innerHTML = list.map(t => `
         <tr>
-            <td class="col-id text-muted small fw-bold">${t.id}</td>
+            <td class="ps-4 col-id text-muted small fw-bold">${t.id}</td>
             <td class="fw-bold text-dark">${t.name}</td>
             <td><span class="badge bg-secondary bg-opacity-10 text-dark border">${t.category || 'General'}</span></td>
             <td class="text-end pe-4">
@@ -80,45 +80,29 @@ function renderTournaments(list) {
 
 function renderTeams(list) {
     const tbody = document.getElementById('tableTeams');
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No hay equipos registrados</td></tr>'; return; }
+    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No hay equipos registrados</td></tr>'; return; }
     
     tbody.innerHTML = list.map(t => {
-        // Lógica de Imagen Profesional
         const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
         const imgUrl = t.logo_url ? `../${t.logo_url}` : fallbackAvatar;
         
         return `
         <tr>
-            <td class="col-id text-muted small fw-bold">${t.id}</td>
+            <td class="ps-4 col-id text-muted small fw-bold">${t.id}</td>
             <td>
                 <div class="d-flex align-items-center">
-                    <img src="${imgUrl}" 
-                         alt="${t.name}" 
-                         class="team-logo-table me-3 shadow-sm"
-                         onerror="this.onerror=null; this.src='https://placehold.co/48?text=TM';">
-                    
+                    <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TM';">
                     <div>
                         <span class="team-name-text">${t.name}</span>
-                        <span class="team-meta-text badge bg-light text-secondary border mt-1">
-                            ${t.short_name || 'N/A'}
-                        </span>
+                        <span class="team-meta-text badge bg-light text-secondary border mt-1">${t.short_name || 'N/A'}</span>
                     </div>
                 </div>
             </td>
-            <td>
-                <div class="d-flex align-items-center text-muted">
-                    <i class="bi bi-person-badge me-2"></i>
-                    ${t.coach_name || '<span class="small fst-italic">Sin entrenador</span>'}
-                </div>
-            </td>
+            <td><div class="text-muted small"><i class="bi bi-person-badge me-1"></i>${t.coach_name || 'Sin coach'}</div></td>
             <td class="text-end pe-4">
                 <div class="d-inline-flex gap-1">
-                    <button class="btn btn-icon text-primary" onclick="editTeam(${t.id})" title="Editar">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button class="btn btn-icon text-danger" onclick="deleteItem('delete_team', ${t.id})" title="Eliminar">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <button class="btn btn-icon text-primary" onclick="editTeam(${t.id})" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-icon text-danger" onclick="deleteItem('delete_team', ${t.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
                 </div>
             </td>
         </tr>`
@@ -127,14 +111,14 @@ function renderTeams(list) {
 
 function renderPlayers(list) {
     const tbody = document.getElementById('tablePlayers');
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-people fs-1 d-block mb-2"></i>No hay jugadores</td></tr>'; return; }
+    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No hay jugadores</td></tr>'; return; }
     
     tbody.innerHTML = list.map(p => {
         const team = currentTeamsData.find(t => t.id == p.team_id);
         const teamName = team ? team.name : '<span class="text-muted small">Sin Equipo</span>';
         return `
         <tr>
-            <td class="col-id text-muted small fw-bold">${p.id}</td>
+            <td class="ps-4 col-id text-muted small fw-bold">${p.id}</td>
             <td class="fw-bold text-dark">${p.name}</td>
             <td><span class="badge bg-primary rounded-pill px-3">${p.default_number || '#'}</span></td>
             <td class="small fw-medium">${teamName}</td>
@@ -146,24 +130,13 @@ function renderPlayers(list) {
     }).join('');
 }
 
-// --- MODALS & FORMS ---
+// --- MODALES & FORMS ---
 function openModal(id) {
     const modal = new bootstrap.Modal(document.getElementById(id));
     const form = document.querySelector(`#${id} form`);
     form.reset();
     form.querySelector(`input[name='id']`).value = '';
-    
-    // Reset logo preview if applicable
     if(id === 'modalTeam') document.getElementById('previewLogo').src = 'https://placehold.co/80?text=Logo';
-
-    if(id==='modalTournament') document.getElementById('titleTournament').innerText = 'Nuevo Torneo';
-    if(id==='modalTeam') {
-        document.getElementById('titleTeam').innerText = 'Nuevo Equipo';
-        const filter = document.getElementById('dashboardFilterTournament').value;
-        if(filter != 0) document.getElementById('selectTournamentForTeam').value = filter;
-    }
-    if(id==='modalPlayer') document.getElementById('titlePlayer').innerText = 'Nuevo Jugador';
-    
     modal.show();
 }
 
@@ -184,10 +157,7 @@ function editTeam(id) {
     document.getElementById('team_name').value = item.name;
     document.getElementById('team_short').value = item.short_name;
     document.getElementById('team_coach').value = item.coach_name;
-    
-    // Preview Logo
     document.getElementById('previewLogo').src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
-
     document.getElementById('titleTeam').innerText = 'Editar Equipo';
     new bootstrap.Modal(document.getElementById('modalTeam')).show();
 }
@@ -203,82 +173,47 @@ function editPlayer(id) {
     new bootstrap.Modal(document.getElementById('modalPlayer')).show();
 }
 
-// --- SUBMIT ---
 function setupForms() {
-    handleFormSubmit('formTournament', 'create_tournament', 'update_tournament', '#modalTournament');
-    handleFormSubmit('formTeam', 'create_team', 'update_team', '#modalTeam');
-    handleFormSubmit('formPlayer', 'add_player', 'update_player', '#modalPlayer');
-}
+    ['formTournament', 'formTeam', 'formPlayer'].forEach(id => {
+        document.getElementById(id).addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const isUpdate = formData.get('id');
+            let actionPrefix = isUpdate ? 'update_' : (id === 'formPlayer' ? 'add_' : 'create_');
+            let finalAction = actionPrefix + (id === 'formPlayer' ? 'player' : id.replace('form','').toLowerCase());
 
-function handleFormSubmit(formId, createAction, updateAction, modalId) {
-    document.getElementById(formId).addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const id = formData.get('id');
-        const action = id ? updateAction : createAction;
-
-        try {
-            const res = await fetch(`${API_URL}?action=${action}`, {
-                method: 'POST',
-                body: formData 
-            });
-            const json = await res.json();
-            
-            if(json.status === 'success') {
-                const modal = bootstrap.Modal.getInstance(document.querySelector(modalId));
-                modal.hide();
-                if (formId === 'formTournament') loadTournamentsList(); 
-                else loadFilteredData(document.getElementById('dashboardFilterTournament').value);
-            } else {
-                alert('Error: ' + json.message);
-            }
-        } catch (err) { alert('Error de conexión'); }
+            try {
+                const res = await fetch(`${API_URL}?action=${finalAction}`, { method: 'POST', body: formData });
+                const json = await res.json();
+                if(json.status === 'success') {
+                    bootstrap.Modal.getInstance(document.querySelector(`#${id}`).closest('.modal')).hide();
+                    loadTournamentsList();
+                    loadFilteredData(document.getElementById('dashboardFilterTournament').value);
+                } else alert(json.message);
+            } catch (err) { console.error(err); }
+        });
     });
 }
 
-// --- DELETE / DETACH ---
 async function deleteItem(action, id) {
-    if (action === 'delete_team') {
-        const filter = document.getElementById('dashboardFilterTournament').value;
-        if (filter != 0) {
-            if(!confirm('¿Quitar equipo de este torneo?')) return;
-            try {
-                await fetch(`${API_URL}?action=detach_team`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id: id, tournament_id: filter })
-                });
-                loadFilteredData(filter);
-                return;
-            } catch (e) { alert('Error'); return; }
-        }
+    const filter = document.getElementById('dashboardFilterTournament').value;
+    if (action === 'delete_team' && filter != 0) {
+        if(!confirm('¿Quitar del torneo?')) return;
+        await fetch(`${API_URL}?action=detach_team`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, tournament_id: filter}) });
+    } else {
+        if(!confirm('¿Eliminar permanentemente?')) return;
+        await fetch(`${API_URL}?action=${action}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id}) });
     }
-
-    if(!confirm('¿Eliminar permanentemente?')) return;
-    try {
-        await fetch(`${API_URL}?action=${action}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id: id })
-        });
-        const filter = document.getElementById('dashboardFilterTournament').value;
-        loadFilteredData(filter);
-        if(action === 'delete_tournament') loadTournamentsList();
-    } catch (e) { alert('Error'); }
+    loadFilteredData(filter);
+    if(action === 'delete_tournament') loadTournamentsList();
 }
 
-// --- HELPERS ---
-function fillSelect(id, items, includeEmpty) {
-    const select = document.getElementById(id);
-    let opts = includeEmpty ? '<option value="">-- Ninguno --</option>' : '';
-    items.forEach(i => opts += `<option value="${i.id}">${i.name}</option>`);
-    select.innerHTML = opts;
+function fillSelect(id, items, empty) {
+    const s = document.getElementById(id); if(!s) return;
+    s.innerHTML = (empty ? '<option value="">-- Seleccionar --</option>' : '') + items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
 }
-function fillSelectTeams(items, selectId, includeAll) {
-    const select = document.getElementById(selectId);
-    if(!select) return;
-    let opts = includeAll ? '<option value="0">Todos los Equipos</option>' : '<option value="">Seleccione...</option>';
-    items.forEach(i => opts += `<option value="${i.id}">${i.name}</option>`);
-    select.innerHTML = opts;
+
+function fillSelectTeams(items, id, all) {
+    const s = document.getElementById(id); if(!s) return;
+    s.innerHTML = (all ? '<option value="0">Todos los Equipos</option>' : '<option value="">Seleccione Equipo...</option>') + items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
 }

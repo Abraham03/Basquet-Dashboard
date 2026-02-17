@@ -2,6 +2,7 @@
 // 1. Cargar Configuración
 require_once __DIR__ . '/config/DatabaseConfig.php';
 require_once __DIR__ . '/src/Controller/Api/AuthController.php'; // <--- AGREGAR ESTO
+date_default_timezone_set('America/Mexico_City');
 
 // 2. Autoloader (Carga clases automáticamente)
 spl_autoload_register(function ($className) {

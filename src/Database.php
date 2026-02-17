@@ -22,6 +22,7 @@ class Database {
                 throw new Exception("Error de conexión: " . $this->connection->connect_error);
             }
 
+            $this->connection->query("SET time_zone = '-06:00'");
             $this->connection->set_charset("utf8mb4");
 
         } catch (Exception $e) {
@@ -30,6 +31,15 @@ class Database {
             echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             exit;
         }
+    }
+    
+    /**
+     * Devuelve la fecha y hora actual de México para usar en INSERT/UPDATE
+     */
+    public static function now(): string {
+        // Al estar el date_default_timezone_set en el index, 
+        // esto siempre devolverá la hora de CDMX.
+        return date('Y-m-d H:i:s');
     }
 
     // Método estático para obtener LA instancia de la clase Database
