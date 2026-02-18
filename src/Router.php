@@ -7,22 +7,25 @@ class Router {
 
         $method = $_SERVER['REQUEST_METHOD'];
         
-        // --- FIX PARA FLUTTER/CORS (IMPORTANTE) ---
-        // Si Flutter manda una petición de prueba (OPTIONS), respondemos OK y terminamos.
         if ($method == 'OPTIONS') {
             http_response_code(200);
             exit();
         }
 
-        $action = $_GET['action'] ?? 'NO_ACTION';
-        
-        // Leemos el input
+        // 1. Leer y Decodificar Input
         $inputJSON = file_get_contents('php://input');
-        $input = json_decode($inputJSON, true) ?? $_POST;
+        $input = json_decode($inputJSON, true);
 
-        // --- LOGUEAR LA PETICIÓN ENTRANTE ---
-        Logger::write("Petición Recibida: [$method] action=$action", $input);
+        // Si no es JSON válido, intentar POST estándar
+        if (!is_array($input)) {
+            $input = $_POST;
+        }
 
+        // 2. Determinar Acción
+        // Prioridad: 1. URL ($_GET) -> 2. Cuerpo JSON ($input) -> 3. Defecto
+        $action = $_GET['action'] ?? ($input['action'] ?? 'NO_ACTION');
+
+        Logger::write("Router: [$method] action=$action", $input); // Log simplificado
         try {
             switch ($action) {
                 // --- Autenticacion
@@ -42,6 +45,7 @@ class Router {
                     break;
                 case 'get_data_by_tournament':(new CatalogController())->getDataByTournament();
                     break;    
+                case 'get_fixture': (new TournamentController())->getFixture($_GET['tournament_id'] ?? 0);    
                     
                 // --- Creacion
                 case 'create_tournament':(new TournamentController())->create($input);
@@ -51,26 +55,29 @@ class Router {
                 case 'add_player':(new PlayerController())->addPlayer($input);
                     break;
                     
-                // --- ACTUALIZACIÓN 
-                case 'update_tournament': 
-                    (new TournamentController())->update($input); 
-                    break;
-                case 'update_team': 
-                    (new TeamController())->update($input); 
-                    break;
-                case 'update_player': 
-                    (new PlayerController())->update($input); 
+                case 'generate_fixture': 
+                    // Validación rápida antes de llamar al controlador
+                    if(empty($input)) {
+                        throw new Exception("El cuerpo de la petición está vacío (JSON inválido)");
+                    }
+                    (new TournamentController())->generateFixture($input); 
                     break;    
                     
+                // --- ACTUALIZACIÓN 
+                case 'update_tournament': (new TournamentController())->update($input); 
+                    break;
+                case 'update_team': (new TeamController())->update($input); 
+                    break;
+                case 'update_player': (new PlayerController())->update($input); 
+                    break;    
+                case 'update_fixture_match': (new TournamentController())->updateFixtureMatch($input); break;    
+                    
                 // --- Eliminacion
-                case 'delete_tournament': 
-                    (new TournamentController())->delete($input['id'] ?? 0); 
+                case 'delete_tournament':(new TournamentController())->delete($input['id'] ?? 0); 
                     break;
-                case 'delete_team': 
-                    (new TeamController())->delete($input['id'] ?? 0); 
+                case 'delete_team':(new TeamController())->delete($input['id'] ?? 0); 
                     break;
-                case 'delete_player': 
-                    (new PlayerController())->delete($input['id'] ?? 0); 
+                case 'delete_player':(new PlayerController())->delete($input['id'] ?? 0); 
                     break;    
                     
                 case 'detach_team': (new TeamController())->detach($input); 
@@ -79,6 +86,9 @@ class Router {
                 // Sincronizacion Flutter
                 case 'sync_match':(new MatchController())->sync($input);
                     break;
+                    
+               
+                    break;   
     
                 default:
                     Logger::write("Error: Acción no encontrada -> $action");

@@ -1,8 +1,16 @@
 const API_URL = '../api.php';
 
-let tournamentsData = [];
-let currentTeamsData = [];
-let currentPlayersData = []; 
+// Estado Global de Datos
+let allTournaments = [];
+let allTeams = [];
+let allPlayers = [];
+let filteredPlayers = []; // Para el filtro local de jugadores
+
+// Configuración de Paginación
+const ITEMS_PER_PAGE = 5;
+let pageTournaments = 1;
+let pageTeams = 1;
+let pagePlayers = 1;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadTournamentsList(); 
@@ -10,138 +18,301 @@ document.addEventListener("DOMContentLoaded", () => {
     setupForms();
 });
 
+// --- HELPER: SKELETON LOADER ---
+function showTableSkeleton(tableId, columns) {
+    const tbody = document.getElementById(tableId);
+    if (!tbody) return;
+    let html = '';
+    for(let i=0; i<5; i++) {
+        html += `<tr class="placeholder-glow">`;
+        for(let j=0; j<columns; j++) {
+            html += `<td><span class="placeholder col-10 rounded"></span></td>`;
+        }
+        html += `</tr>`;
+    }
+    tbody.innerHTML = html;
+}
+
 // --- CARGA DE DATOS ---
+
+// 1. Cargar Torneos
 async function loadTournamentsList() {
+    showTableSkeleton('tableTournaments', 4);
     try {
         const res = await fetch(`${API_URL}?action=get_tournaments_list`);
         const json = await res.json();
         if (json.status === 'success') {
-            tournamentsData = json.data;
-            renderTournaments(tournamentsData);
+            allTournaments = json.data;
+            pageTournaments = 1; // Resetear página
+            renderTournamentsTable(); 
             
+            // Llenar select de filtro principal
             const filterSelect = document.getElementById('dashboardFilterTournament');
-            const currentVal = filterSelect.value;
-            filterSelect.innerHTML = '<option value="0">⭐ Ver Todos los Torneos</option>';
-            tournamentsData.forEach(t => filterSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`);
-            if(currentVal) filterSelect.value = currentVal;
+            if (filterSelect) {
+                const currentVal = filterSelect.value;
+                filterSelect.innerHTML = '<option value="0">⭐ Ver Todos los Torneos</option>';
+                allTournaments.forEach(t => filterSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`);
+                if(currentVal) filterSelect.value = currentVal;
+            }
 
-            fillSelect('selectTournamentForTeam', tournamentsData, true); 
+            // Llenar select del modal de equipos
+            fillSelect('selectTournamentForTeam', allTournaments, true); 
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error cargando torneos:", e); }
 }
 
+// 2. Cargar Datos Filtrados (Equipos y Jugadores)
 async function loadFilteredData(tournamentId) {
-    document.getElementById('tableTeams').innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">Cargando...</td></tr>';
-    document.getElementById('tablePlayers').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Cargando...</td></tr>';
+    showTableSkeleton('tableTeams', 4);
+    showTableSkeleton('tablePlayers', 5);
     
     const subtitle = tournamentId == 0 ? 'Todos los registros' : 'Filtrado por torneo';
-    document.getElementById('teamSubtitle').innerText = subtitle;
-    document.getElementById('playerSubtitle').innerText = subtitle;
+    const subTeam = document.getElementById('teamSubtitle');
+    const subPlayer = document.getElementById('playerSubtitle');
+    if(subTeam) subTeam.innerText = subtitle;
+    if(subPlayer) subPlayer.innerText = subtitle;
 
     try {
         const res = await fetch(`${API_URL}?action=get_data_by_tournament&tournament_id=${tournamentId}`);
         const json = await res.json();
         if (json.status === 'success') {
-            currentTeamsData = json.data.teams;
-            currentPlayersData = json.data.players;
-            renderTeams(currentTeamsData);
-            renderPlayers(currentPlayersData);
-            fillSelectTeams(currentTeamsData, 'selectTeamForPlayer');
-            fillSelectTeams(currentTeamsData, 'filterPlayersByTeam', true);
-            document.getElementById('filterPlayersByTeam').value = '0';
+            allTeams = json.data.teams;
+            allPlayers = json.data.players;
+            filteredPlayers = [...allPlayers]; // Inicializar filtro local
+
+            // Resetear páginas
+            pageTeams = 1;
+            pagePlayers = 1;
+
+            renderTeamsTable();
+            renderPlayersTable();
+            
+            // Actualizar selects de filtros locales y modales
+            fillSelectTeams(allTeams, 'selectTeamForPlayer');
+            fillSelectTeams(allTeams, 'filterPlayersByTeam', true);
+            
+            const filterPlayersSelect = document.getElementById('filterPlayersByTeam');
+            if(filterPlayersSelect) filterPlayersSelect.value = '0';
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error cargando datos filtrados:", e); }
 }
 
 function filterDashboard() {
-    loadFilteredData(document.getElementById('dashboardFilterTournament').value);
+    const select = document.getElementById('dashboardFilterTournament');
+    if(select) loadFilteredData(select.value);
 }
 
 function applyLocalPlayerFilter() {
-    const teamId = document.getElementById('filterPlayersByTeam').value;
-    const filtered = teamId == 0 ? currentPlayersData : currentPlayersData.filter(p => p.team_id == teamId);
-    renderPlayers(filtered);
-}
-
-// --- RENDERIZADO DE TABLAS ---
-function renderTournaments(list) {
-    const tbody = document.getElementById('tableTournaments');
-    tbody.innerHTML = list.map(t => `
-        <tr>
-            <td class="ps-4 col-id text-muted small fw-bold">${t.id}</td>
-            <td class="fw-bold text-dark">${t.name}</td>
-            <td><span class="badge bg-secondary bg-opacity-10 text-dark border">${t.category || 'General'}</span></td>
-            <td class="text-end pe-4">
-                <button class="btn btn-icon text-primary me-1" onclick="editTournament(${t.id})"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_tournament', ${t.id})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
-}
-
-function renderTeams(list) {
-    const tbody = document.getElementById('tableTeams');
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No hay equipos registrados</td></tr>'; return; }
+    const select = document.getElementById('filterPlayersByTeam');
+    if(!select) return;
     
-    tbody.innerHTML = list.map(t => {
-        const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
-        const imgUrl = t.logo_url ? `../${t.logo_url}` : fallbackAvatar;
+    const teamId = select.value;
+    // Filtrar sobre la copia local 'filteredPlayers'
+    if (teamId == 0) {
+        filteredPlayers = [...allPlayers];
+    } else {
+        filteredPlayers = allPlayers.filter(p => p.team_id == teamId);
+    }
+    
+    pagePlayers = 1; // Resetear página al filtrar
+    renderPlayersTable();
+}
+
+// --- RENDERIZADO CON PAGINACIÓN (WRAPPERS) ---
+
+function renderTournamentsTable() {
+    renderPaginatedList(allTournaments, pageTournaments, 'tableTournaments', 'paginationTournaments', rowTournamentTemplate, (newPage) => {
+        pageTournaments = newPage;
+        renderTournamentsTable();
+    });
+}
+
+function renderTeamsTable() {
+    renderPaginatedList(allTeams, pageTeams, 'tableTeams', 'paginationTeams', rowTeamTemplate, (newPage) => {
+        pageTeams = newPage;
+        renderTeamsTable();
+    });
+}
+
+function renderPlayersTable() {
+    renderPaginatedList(filteredPlayers, pagePlayers, 'tablePlayers', 'paginationPlayers', rowPlayerTemplate, (newPage) => {
+        pagePlayers = newPage;
+        renderPlayersTable();
+    });
+}
+
+/**
+ * Lógica Core de Paginación
+ */
+function renderPaginatedList(data, currentPage, tableId, paginationId, rowTemplateFunc, onPageChange) {
+    const tbody = document.getElementById(tableId);
+    const pagContainer = document.getElementById(paginationId);
+    
+    if (!tbody || !pagContainer) return;
+
+    if(data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="100%" class="text-center py-4 text-muted">No hay datos disponibles</td></tr>';
+        pagContainer.innerHTML = '';
+        return;
+    }
+
+    // Calcular índices
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageData = data.slice(start, end);
+    const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+
+    // 1. Renderizar Filas
+    tbody.innerHTML = pageData.map(rowTemplateFunc).join('');
+    
+    // 2. Renderizar Controles de Paginación
+    if(data.length > 0) {
+        let controlsHtml = '';
         
-        return `
-        <tr>
-            <td class="ps-4 col-id text-muted small fw-bold">${t.id}</td>
-            <td>
-                <div class="d-flex align-items-center">
-                    <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TM';">
-                    <div>
-                        <span class="team-name-text">${t.name}</span>
-                        <span class="team-meta-text badge bg-light text-secondary border mt-1">${t.short_name || 'N/A'}</span>
-                    </div>
+        if (totalPages > 1) {
+            controlsHtml = `
+                <div>
+                    <button class="btn-page" ${currentPage === 1 ? 'disabled' : ''} onclick="window.changePage('${paginationId}', ${currentPage - 1})">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <span class="mx-2 small text-muted fw-bold">${currentPage} / ${totalPages}</span>
+                    <button class="btn-page" ${currentPage === totalPages ? 'disabled' : ''} onclick="window.changePage('${paginationId}', ${currentPage + 1})">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
                 </div>
-            </td>
-            <td><div class="text-muted small"><i class="bi bi-person-badge me-1"></i>${t.coach_name || 'Sin coach'}</div></td>
-            <td class="text-end pe-4">
-                <div class="d-inline-flex gap-1">
-                    <button class="btn btn-icon text-primary" onclick="editTeam(${t.id})" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                    <button class="btn btn-icon text-danger" onclick="deleteItem('delete_team', ${t.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
-                </div>
-            </td>
-        </tr>`
-    }).join('');
+            `;
+        }
+
+        pagContainer.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center w-100 mt-2">
+                <span class="page-info">Mostrando ${start + 1}-${Math.min(end, data.length)} de ${data.length}</span>
+                ${controlsHtml}
+            </div>
+        `;
+    } else {
+        pagContainer.innerHTML = '';
+    }
+    
+    // Guardar callback globalmente
+    if (!window.pageCallbacks) window.pageCallbacks = {};
+    window.pageCallbacks[paginationId] = onPageChange;
+
+    // Reactivar Tooltips
+    initializeTooltips();
 }
 
-function renderPlayers(list) {
-    const tbody = document.getElementById('tablePlayers');
-    if(list.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No hay jugadores</td></tr>'; return; }
-    
-    tbody.innerHTML = list.map(p => {
-        const team = currentTeamsData.find(t => t.id == p.team_id);
-        const teamName = team ? team.name : '<span class="text-muted small">Sin Equipo</span>';
-        return `
-        <tr>
-            <td class="ps-4 col-id text-muted small fw-bold">${p.id}</td>
-            <td class="fw-bold text-dark">${p.name}</td>
-            <td><span class="badge bg-primary rounded-pill px-3">${p.default_number || '#'}</span></td>
-            <td class="small fw-medium">${teamName}</td>
-            <td class="text-end pe-4">
-                <button class="btn btn-icon text-primary me-1" onclick="editPlayer(${p.id})"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_player', ${p.id})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`
-    }).join('');
+window.changePage = function(paginationId, newPage) {
+    if (window.pageCallbacks && window.pageCallbacks[paginationId]) {
+        window.pageCallbacks[paginationId](newPage);
+    }
+};
+
+function initializeTooltips() {
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 }
+
+
+// --- TEMPLATES HTML (Aquí estaba el error) ---
+
+const rowTournamentTemplate = (t) => `
+    <tr>
+        <td class="ps-4 text-muted small fw-bold">#${t.id}</td>
+        <td class="fw-bold text-dark">${t.name}</td>
+        <td><span class="badge bg-light text-dark border px-3 py-2">${t.category || 'General'}</span></td>
+        <td class="text-end pe-4">
+            <div class="btn-action-group shadow-sm">
+                <a href="fixture.php?id=${t.id}" class="btn btn-icon text-primary" data-bs-toggle="tooltip" title="Ver Calendario">
+                    <i class="bi bi-calendar-event"></i>
+                </a>
+                <button class="btn btn-icon text-warning" onclick="openFixtureConfig(${t.id})" data-bs-toggle="tooltip" title="Generar Sorteo">
+                    <i class="bi bi-magic"></i>
+                </button>
+                <div class="vr my-1 mx-1 text-muted opacity-25"></div>
+                <button class="btn btn-icon text-secondary" onclick="editTournament(${t.id})" data-bs-toggle="tooltip" title="Editar Info">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_tournament', ${t.id})" data-bs-toggle="tooltip" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    </tr>`;
+
+const rowTeamTemplate = (t) => {
+    const imgUrl = t.logo_url ? `../${t.logo_url}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
+    return `
+    <tr>
+        <td class="ps-4 text-muted small fw-bold">#${t.id}</td>
+        <td>
+            <div class="d-flex align-items-center">
+                <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TM';">
+                <div>
+                    <span class="team-name-text">${t.name}</span>
+                    <span class="team-meta-text badge bg-light text-secondary border mt-1">${t.short_name || 'N/A'}</span>
+                </div>
+            </div>
+        </td>
+        <td><div class="text-muted small fw-medium"><i class="bi bi-person-badge me-1 text-primary opacity-50"></i>${t.coach_name || 'Sin coach'}</div></td>
+        <td class="text-end pe-4">
+            <div class="btn-action-group shadow-sm">
+                <button class="btn btn-icon text-secondary" onclick="editTeam(${t.id})" title="Editar"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_team', ${t.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>
+        </td>
+    </tr>`;
+};
+
+// --- CORRECCIÓN EN ESTA FUNCIÓN ---
+const rowPlayerTemplate = (p) => {
+    // CORRECCIÓN: Usar 'allTeams' en lugar de 'currentTeamsData'
+    const team = allTeams.find(t => t.id == p.team_id);
+    
+    // Fallback por si el equipo no se encuentra (borrado o null)
+    const teamName = team ? team.name : '<span class="text-muted small">Sin Equipo</span>';
+    
+    return `
+    <tr>
+        <td class="ps-4 text-muted small fw-bold">#${p.id}</td>
+        <td class="fw-bold text-dark">${p.name}</td>
+        <td><span class="badge bg-white text-dark border shadow-sm rounded-pill px-3"># ${p.default_number || '?'}</span></td>
+        <td class="small fw-medium text-muted">${teamName}</td>
+        <td class="text-end pe-4">
+            <div class="btn-action-group shadow-sm">
+                <button class="btn btn-icon text-secondary" onclick="editPlayer(${p.id})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_player', ${p.id})"><i class="bi bi-trash"></i></button>
+            </div>
+        </td>
+    </tr>`;
+};
 
 // --- MODALES & FORMS ---
 function openModal(id) {
-    const modal = new bootstrap.Modal(document.getElementById(id));
+    const modalEl = document.getElementById(id);
+    if(!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
     const form = document.querySelector(`#${id} form`);
-    form.reset();
-    form.querySelector(`input[name='id']`).value = '';
-    if(id === 'modalTeam') document.getElementById('previewLogo').src = 'https://placehold.co/80?text=Logo';
+    if(form) {
+        form.reset();
+        const idInput = form.querySelector(`input[name='id']`);
+        if(idInput) idInput.value = '';
+    }
+    if(id === 'modalTeam') {
+        const img = document.getElementById('previewLogo');
+        if(img) img.src = 'https://placehold.co/80?text=Logo';
+    }
     modal.show();
 }
 
+function openFixtureConfig(tournamentId) {
+    const form = document.getElementById('formFixture');
+    if(form) form.reset();
+    document.getElementById('fix_tourn_id').value = tournamentId;
+    new bootstrap.Modal(document.getElementById('modalFixtureConfig')).show();
+}
+
 function editTournament(id) {
-    const item = tournamentsData.find(x => x.id == id);
+    const item = allTournaments.find(x => x.id == id);
     if(!item) return;
     document.getElementById('tourn_id').value = item.id;
     document.getElementById('tourn_name').value = item.name;
@@ -151,19 +322,20 @@ function editTournament(id) {
 }
 
 function editTeam(id) {
-    const item = currentTeamsData.find(x => x.id == id);
+    const item = allTeams.find(x => x.id == id);
     if(!item) return;
     document.getElementById('team_id').value = item.id;
     document.getElementById('team_name').value = item.name;
     document.getElementById('team_short').value = item.short_name;
     document.getElementById('team_coach').value = item.coach_name;
-    document.getElementById('previewLogo').src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
+    const img = document.getElementById('previewLogo');
+    if(img) img.src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
     document.getElementById('titleTeam').innerText = 'Editar Equipo';
     new bootstrap.Modal(document.getElementById('modalTeam')).show();
 }
 
 function editPlayer(id) {
-    const item = currentPlayersData.find(x => x.id == id);
+    const item = filteredPlayers.find(x => x.id == id);
     if(!item) return;
     document.getElementById('player_id').value = item.id;
     document.getElementById('player_name').value = item.name;
@@ -175,7 +347,10 @@ function editPlayer(id) {
 
 function setupForms() {
     ['formTournament', 'formTeam', 'formPlayer'].forEach(id => {
-        document.getElementById(id).addEventListener('submit', async (e) => {
+        const formEl = document.getElementById(id);
+        if(!formEl) return;
+        
+        formEl.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
             const isUpdate = formData.get('id');
@@ -193,6 +368,45 @@ function setupForms() {
             } catch (err) { console.error(err); }
         });
     });
+
+    const formFixture = document.getElementById('formFixture');
+    if (formFixture) {
+        formFixture.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const tournamentId = parseInt(document.getElementById('fix_tourn_id').value);
+            const config = {
+                vueltas: document.getElementById('fix_vueltas').value,
+                pts_victoria: document.getElementById('fix_win').value,
+                pts_derrota: document.getElementById('fix_loss').value,
+                pts_empate: document.getElementById('fix_draw').value
+            };
+
+            const btnSubmit = formFixture.querySelector('button[type="submit"]');
+            const originalText = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+
+            try {
+                const payload = {
+                    action: 'generate_fixture',
+                    tournament_id: tournamentId,
+                    config: config
+                };
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if(json.status === 'success') {
+                    alert('¡Calendario generado exitosamente!');
+                    bootstrap.Modal.getInstance(document.getElementById('modalFixtureConfig')).hide();
+                    window.location.href = `fixture.php?id=${tournamentId}`;
+                } else { alert('Error: ' + json.message); }
+            } catch (err) { console.error(err); alert('Error de conexión.'); } 
+            finally { btnSubmit.disabled = false; btnSubmit.innerHTML = originalText; }
+        });
+    }
 }
 
 async function deleteItem(action, id) {

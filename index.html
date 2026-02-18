@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basket Pro | Analytics</title>
+    <title>Basket Pro | Analytics & Fixture</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,13 +24,14 @@
             background-color: var(--bg-body);
             font-family: 'Inter', sans-serif;
             color: var(--text-dark);
-            padding-bottom: 40px;
+            padding-bottom: 60px;
         }
 
         .navbar-glass {
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             padding: 0.75rem 0;
+            z-index: 1030;
         }
 
         .stat-card {
@@ -40,6 +41,7 @@
             box-shadow: var(--card-shadow);
             padding: 1.5rem;
             height: 100%;
+            transition: transform 0.2s;
         }
 
         .team-logo-analytics {
@@ -52,6 +54,95 @@
             margin-right: 12px;
         }
 
+        /* --- ESTILOS DEL FIXTURE (NUEVO) --- */
+        .rounds-nav-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .nav-pills-scroll {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 8px;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav-pills-scroll::-webkit-scrollbar { display: none; }
+        
+        .nav-pills-scroll .nav-link {
+            border-radius: 50px;
+            padding: 0.4rem 1.2rem;
+            color: var(--text-muted);
+            background: white;
+            border: 1px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .nav-pills-scroll .nav-link.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 5px rgba(255, 87, 34, 0.3);
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            position: relative;
+            height: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .status-indicator {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+            background-color: #cbd5e1;
+        }
+        .match-card[data-status="PLAYING"] .status-indicator { background-color: #FF5722; }
+        .match-card[data-status="FINISHED"] .status-indicator { background-color: #10B981; }
+
+        .match-card-body { padding: 1rem 1rem 1rem 1.5rem; }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .team-info { display: flex; align-items: center; width: 70%; }
+        .team-logo-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; }
+        .team-name-card { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .team-score { font-weight: 800; font-size: 1.1rem; color: var(--text-dark); }
+        .team-score.winner { color: var(--primary); }
+
+        .match-meta {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed #e5e7eb;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .live-badge {
+            background-color: #FEF2F2; color: #DC2626;
+            font-size: 0.65rem; font-weight: 800;
+            padding: 2px 6px; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* --- Tablas --- */
         .table-pro { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
         .table-pro thead th {
             font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
@@ -62,26 +153,15 @@
 
         .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); margin-top: 0.25rem; }
-
-        .custom-select {
-            border: 1px solid #E5E7EB; border-radius: 8px;
-            font-weight: 500; background-color: #F9FAFB;
-        }
-
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-            background: white;
-            border-radius: 20px;
-            margin-top: 2rem;
-            box-shadow: var(--card-shadow);
-        }
+        .custom-select { border: 1px solid #E5E7EB; border-radius: 8px; font-weight: 500; background-color: #F9FAFB; }
+        
+        .empty-state { padding: 4rem 2rem; text-align: center; background: white; border-radius: 20px; margin-top: 2rem; box-shadow: var(--card-shadow); }
         .empty-state i { font-size: 4.5rem; color: #E5E7EB; }
     </style>
 </head>
 <body>
 
-<nav class="navbar-glass mb-4 mb-md-5 sticky-top">
+<nav class="navbar-glass mb-4 sticky-top">
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <i class="bi bi-basket2-fill text-danger fs-3 me-2"></i>
@@ -98,48 +178,58 @@
 <div class="container">
     <div id="loader" class="text-center py-5">
         <div class="spinner-border text-danger" role="status"></div>
-        <p class="mt-3 text-muted fw-medium">Sincronizando marcadores...</p>
+        <p class="mt-3 text-muted fw-medium">Sincronizando datos...</p>
     </div>
 
     <div id="emptyState" style="display: none;">
         <div class="empty-state">
             <i class="bi bi-database-exclamation mb-3 d-block"></i>
             <h4 class="fw-bold">Sin actividad registrada</h4>
-            <p class="text-muted">Aún no hay estadísticas disponibles para este torneo. Los datos aparecerán cuando finalicen los primeros partidos.</p>
+            <p class="text-muted">Aún no hay estadísticas disponibles para este torneo.</p>
         </div>
     </div>
 
     <div id="dashboardContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
+        
         <div class="row g-3 g-md-4 mb-5">
             <div class="col-md-4">
                 <div class="stat-card d-flex justify-content-between align-items-center border-start border-primary border-4">
-                    <div>
-                        <div class="kpi-title">Partidos Finalizados</div>
-                        <div class="kpi-value" id="kpiMatches">0</div>
-                    </div>
+                    <div><div class="kpi-title">Partidos Finalizados</div><div class="kpi-value" id="kpiMatches">0</div></div>
                     <div class="text-primary fs-1 opacity-25"><i class="bi bi-calendar-check"></i></div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card d-flex justify-content-between align-items-center border-start border-info border-4">
-                    <div>
-                        <div class="kpi-title">Clubes en Competición</div>
-                        <div class="kpi-value" id="kpiTeams">0</div>
-                    </div>
+                    <div><div class="kpi-title">Clubes en Competición</div><div class="kpi-value" id="kpiTeams">0</div></div>
                     <div class="text-info fs-1 opacity-25"><i class="bi bi-shield-shaded"></i></div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card d-flex justify-content-between align-items-center border-start border-success border-4">
-                    <div>
-                        <div class="kpi-title">Promedio de Anotación</div>
-                        <div class="kpi-value" id="kpiAvg">0</div>
-                    </div>
+                    <div><div class="kpi-title">Promedio de Anotación</div><div class="kpi-value" id="kpiAvg">0</div></div>
                     <div class="text-success fs-1 opacity-25"><i class="bi bi-lightning-charge"></i></div>
                 </div>
             </div>
         </div>
 
+        <div class="mb-5">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="fw-bold mb-0">Resultados y Calendario</h5>
+                <div id="liveIndicator" class="badge bg-danger bg-opacity-10 text-danger border border-danger d-none">
+                    <span class="spinner-grow spinner-grow-sm me-1" style="width: 0.5rem; height: 0.5rem;"></span> EN VIVO
+                </div>
+            </div>
+
+            <div class="rounds-nav-container">
+                <ul class="nav nav-pills nav-pills-scroll" id="fixtureTabs" role="tablist">
+                    </ul>
+                <div style="position: absolute; right: 0; top:0; bottom:5px; width: 40px; background: linear-gradient(to right, transparent, var(--bg-body)); pointer-events: none;"></div>
+            </div>
+
+            <div class="tab-content" id="fixtureContent">
+                <div class="text-center py-4 text-muted small">Selecciona una jornada...</div>
+            </div>
+        </div>
         <div class="row g-4 mb-5">
             <div class="col-lg-8">
                 <div class="stat-card">
@@ -167,9 +257,7 @@
                     <h6 class="fw-bold mb-4 text-muted text-uppercase small">Muro Defensivo (Prom. Recibido)</h6>
                     <div class="table-responsive">
                         <table class="table align-middle">
-                            <thead class="table-light">
-                                <tr><th>Equipo</th><th class="text-end">Promedio</th></tr>
-                            </thead>
+                            <thead class="table-light"><tr><th>Equipo</th><th class="text-end">Promedio</th></tr></thead>
                             <tbody id="defenseBody"></tbody>
                         </table>
                     </div>
@@ -233,18 +321,24 @@
         emptyState.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_URL}?action=get_dashboard_stats&tournament_id=${tournamentId}`);
-            const json = await res.json();
+            // 1. Cargar Estadísticas
+            const statsRes = await fetch(`${API_URL}?action=get_dashboard_stats&tournament_id=${tournamentId}`);
+            const statsJson = await statsRes.json();
+            
+            // 2. Cargar Fixture (Calendario)
+            const fixtureRes = await fetch(`${API_URL}?action=get_fixture&tournament_id=${tournamentId}`);
+            const fixtureJson = await fixtureRes.json();
 
-            if (json.status === 'success') {
-                const d = json.data;
+            if (statsJson.status === 'success') {
+                const d = statsJson.data;
                 
-                if (!d.stats.total_matches || d.stats.total_matches == 0) {
+                if ((!d.stats.total_matches || d.stats.total_matches == 0) && (!fixtureJson.data || !fixtureJson.data.rounds)) {
                     loader.style.display = 'none';
                     emptyState.style.display = 'block';
                     return;
                 }
 
+                // Renderizar Stats
                 document.getElementById('kpiMatches').innerText = d.stats.total_matches;
                 document.getElementById('kpiTeams').innerText = d.stats.total_teams;
                 document.getElementById('kpiAvg').innerText = parseFloat(d.stats.avg_points).toFixed(1);
@@ -255,11 +349,122 @@
                 renderDefenseTable(d.best_defense);
                 renderStandings(d.standings);
 
+                // Renderizar Fixture
+                if(fixtureJson.status === 'success' && fixtureJson.data.rounds) {
+                    renderFixture(fixtureJson.data.rounds);
+                } else {
+                    document.getElementById('fixtureContent').innerHTML = '<div class="alert alert-light border text-center">Calendario no disponible.</div>';
+                }
+
                 loader.style.display = 'none';
                 content.style.display = 'block';
                 setTimeout(() => content.style.opacity = '1', 50);
             }
         } catch (e) { console.error(e); }
+    }
+
+    // --- NUEVO: RENDERIZADO DEL FIXTURE PÚBLICO ---
+    function renderFixture(rounds) {
+        const tabsContainer = document.getElementById('fixtureTabs');
+        const contentContainer = document.getElementById('fixtureContent');
+        const liveIndicator = document.getElementById('liveIndicator');
+        
+        tabsContainer.innerHTML = '';
+        contentContainer.innerHTML = '';
+        let hasLiveGames = false;
+
+        if (!rounds || Object.keys(rounds).length === 0) {
+            contentContainer.innerHTML = '<div class="text-center text-muted py-3">No hay partidos programados.</div>';
+            return;
+        }
+
+        // Encontrar la jornada "actual" (la primera que tenga partidos pendientes o en juego)
+        let activeRoundIndex = 0;
+        let index = 0;
+        let foundActive = false;
+
+        for (const [roundName, matches] of Object.entries(rounds)) {
+            // Verificar si hay partidos en vivo para activar el indicador global
+            if (matches.some(m => m.status === 'PLAYING')) hasLiveGames = true;
+
+            // Lógica para seleccionar tab por defecto: primera jornada con partidos no finalizados
+            if (!foundActive && matches.some(m => m.status !== 'FINISHED')) {
+                activeRoundIndex = index;
+                foundActive = true;
+            }
+            index++;
+        }
+        
+        if (hasLiveGames) liveIndicator.classList.remove('d-none');
+        else liveIndicator.classList.add('d-none');
+
+        // Renderizar Tabs y Contenido
+        index = 0;
+        for (const [roundName, matches] of Object.entries(rounds)) {
+            const safeId = roundName.replace(/[^a-zA-Z0-9]/g, '_');
+            const isActive = index === activeRoundIndex;
+            const activeClass = isActive ? 'active' : '';
+            const showClass = isActive ? 'show active' : '';
+
+            // Tab
+            tabsContainer.innerHTML += `
+                <li class="nav-item">
+                    <button class="nav-link ${activeClass}" data-bs-toggle="pill" data-bs-target="#tab_${safeId}" type="button">
+                        ${roundName}
+                    </button>
+                </li>`;
+
+            // Partidos
+            let matchesHtml = matches.map(m => {
+                const dateStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'}) : 'TBD';
+                const timeStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
+                
+                // Estados
+                let statusBadge = '';
+                if(m.status === 'PLAYING') statusBadge = '<div class="live-badge">EN VIVO</div>';
+                else if(m.status === 'FINISHED') statusBadge = '<span class="badge bg-light text-muted border">Final</span>';
+                else statusBadge = `<span class="text-muted small"><i class="bi bi-clock me-1"></i>${timeStr}</span>`;
+
+                // Resultados (si existen, asumimos que vienen en el objeto o se calculan, aquí simulamos visualización)
+                // Nota: Tu API actual de fixture trae datos básicos. Si quieres marcadores en vivo aquí, 
+                // necesitarías unir con la tabla matches real. Por ahora mostramos estructura.
+                
+                return `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="match-card" data-status="${m.status}">
+                        <div class="status-indicator"></div>
+                        <div class="match-card-body">
+                            <div class="team-row">
+                                <div class="team-info">
+                                    <img src="${m.logo_a || `https://ui-avatars.com/api/?name=${m.team_a}&background=f3f4f6&color=6b7280`}" class="team-logo-sm rounded">
+                                    <span class="team-name-card">${m.team_a}</span>
+                                </div>
+                                <span class="team-score"></span> </div>
+                            
+                            <div class="team-row mb-0">
+                                <div class="team-info">
+                                    <img src="${m.logo_b || `https://ui-avatars.com/api/?name=${m.team_b}&background=f3f4f6&color=6b7280`}" class="team-logo-sm rounded">
+                                    <span class="team-name-card">${m.team_b}</span>
+                                </div>
+                                <span class="team-score"></span> </div>
+
+                            <div class="match-meta">
+                                <div><i class="bi bi-calendar-event me-1"></i>${dateStr}</div>
+                                <div>${statusBadge}</div>
+                                <div><i class="bi bi-geo-alt me-1"></i>${m.venue_name || 'Sede'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            contentContainer.innerHTML += `
+                <div class="tab-pane fade ${showClass}" id="tab_${safeId}">
+                    <div class="row g-3">${matchesHtml}</div>
+                </div>`;
+            
+            index++;
+        }
     }
 
     function getTeamLogo(teamName, logoUrl) {

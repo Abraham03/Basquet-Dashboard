@@ -8,12 +8,13 @@ date_default_timezone_set('America/Mexico_City');
 spl_autoload_register(function ($className) {
     $baseDir = __DIR__ . '/src/';
     $folders = [
-        '',                     // 
+        '',                     
         'Controller/Api/',
         'Controller/Web/',
-        'Repository/',        // Repositories/
+        'Service/',
+        'Repository/',        
         'Utils/',
-        'assets/team_logo'// Utils/
+        'assets/team_logo'
     ];
 
     foreach ($folders as $folder) {
