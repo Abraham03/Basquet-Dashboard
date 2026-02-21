@@ -5,158 +5,268 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basket Pro | Analytics & Fixture</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* --- VARIABLES DE TEMA DINÁMICAS --- */
         :root {
+            /* Colores de Marca */
             --primary: #FF5722;
             --primary-dark: #E64A19;
-            --bg-body: #F3F4F6;
-            --text-dark: #1F2937;
-            --text-muted: #6B7280;
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --success: #10B981;
+            --info: #0EA5E9;
+            
+            /* Tema Claro (Por defecto) */
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --nav-bg: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.025);
+            --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --table-header: #F1F5F9;
+            --badge-bg: #F1F5F9;
+            --icon-bg: #F1F5F9;
+            --chart-grid: #E2E8F0;
         }
 
+        [data-theme="dark"] {
+            /* Tema Oscuro */
+            --bg-body: #0F172A;
+            --bg-card: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #CBD5E1; 
+            --border-color: #334155;
+            --nav-bg: rgba(30, 41, 59, 0.95);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+            --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            --table-header: #0F172A;
+            --badge-bg: #334155;
+            --icon-bg: rgba(255, 255, 255, 0.05);
+            --chart-grid: #334155;
+        }
+
+        /* --- GLOBAL --- */
         body {
             background-color: var(--bg-body);
             font-family: 'Inter', sans-serif;
-            color: var(--text-dark);
+            color: var(--text-main);
             padding-bottom: 60px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        h1, h2, h3, h4, h5, h6 { color: var(--text-main) !important; }
+        p { color: var(--text-muted); }
+
+        .fw-bold { color: var(--text-main); }
+        .text-muted { color: var(--text-muted) !important; }
+
+        /* --- NAVBAR --- */
         .navbar-glass {
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 0.75rem 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding: 1rem 0;
             z-index: 1030;
+            transition: background-color 0.3s;
+            border-bottom: 1px solid var(--border-color);
         }
 
+        .custom-select { 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            font-weight: 500; 
+            background-color: var(--bg-card); 
+            color: var(--text-main);
+            padding: 0.6rem 1rem;
+            transition: all 0.3s;
+        }
+        .custom-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.2); }
+
+        .btn-theme-toggle { 
+            background: var(--bg-card); 
+            color: var(--text-main); 
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .btn-theme-toggle:hover { background: var(--border-color); }
+
+        /* --- GALERÍA PROFESIONAL MEJORADA (LETTERBOX BLUR) --- */
+        .gallery-container {
+            height: 450px; 
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            background-color: #000; 
+            position: relative;
+        }
+        @media (max-width: 768px) { .gallery-container { height: 300px; } }
+
+        .slide-content-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .gallery-bg-blur {
+            position: absolute;
+            top: -20px; bottom: -20px; left: -20px; right: -20px;
+            width: calc(100% + 40px);
+            height: calc(100% + 40px);
+            object-fit: cover;
+            filter: blur(25px) brightness(0.6);
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        .gallery-img-main {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+            object-position: center;
+        }
+        
+        .carousel-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 40%);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .carousel-caption {
+            z-index: 4;
+            bottom: 20px;
+            text-align: left;
+            left: 5%;
+            right: 5%;
+        }
+
+        /* --- TARJETAS KPI (ESTADÍSTICAS) --- */
         .stat-card {
-            background: white;
-            border: none;
-            border-radius: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
             box-shadow: var(--card-shadow);
             padding: 1.5rem;
             height: 100%;
-            transition: transform 0.2s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); }
 
-        .team-logo-analytics {
-            width: 36px; height: 36px;
-            object-fit: contain;
-            background-color: #fff;
-            border: 1px solid #eaecf0;
-            border-radius: 8px;
-            padding: 3px;
-            margin-right: 12px;
-        }
-
-        /* --- ESTILOS DEL FIXTURE (NUEVO) --- */
-        .rounds-nav-container {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-        .nav-pills-scroll {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 8px;
-            padding-bottom: 5px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        .nav-pills-scroll::-webkit-scrollbar { display: none; }
+        .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; line-height: 1.1; }
         
+        .icon-container {
+            width: 54px; height: 54px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            background-color: var(--icon-bg);
+        }
+
+        /* --- ESTILOS DEL FIXTURE (TABS Y CARTAS) --- */
+        .rounds-nav-container { position: relative; margin-bottom: 1.5rem; }
+        .nav-pills-scroll {
+            display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;
+            padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
         .nav-pills-scroll .nav-link {
-            border-radius: 50px;
-            padding: 0.4rem 1.2rem;
-            color: var(--text-muted);
-            background: white;
-            border: 1px solid #e5e7eb;
-            font-weight: 600;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            transition: all 0.2s;
+            border-radius: 50px; padding: 0.5rem 1.2rem;
+            color: var(--text-muted); background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-weight: 600; font-size: 0.9rem; white-space: nowrap; transition: all 0.2s;
         }
         .nav-pills-scroll .nav-link.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 2px 5px rgba(255, 87, 34, 0.3);
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
         }
 
         .match-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-            position: relative;
-            height: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden; position: relative; height: 100%;
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
         }
-        .match-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-        }
+        .match-card:hover { transform: translateY(-3px); box-shadow: var(--hover-shadow); border-color: var(--primary); }
         
-        .status-indicator {
-            position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background-color: #cbd5e1;
-        }
-        .match-card[data-status="PLAYING"] .status-indicator { background-color: #FF5722; }
-        .match-card[data-status="FINISHED"] .status-indicator { background-color: #10B981; }
+        .status-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background-color: var(--border-color); transition: background-color 0.3s; }
+        .match-card[data-status="PLAYING"] .status-indicator { background-color: var(--primary); }
+        .match-card[data-status="FINISHED"] .status-indicator { background-color: var(--success); }
 
-        .match-card-body { padding: 1rem 1rem 1rem 1.5rem; }
+        .match-card-body { padding: 1.2rem 1.2rem 1.2rem 1.8rem; }
 
-        .team-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        .team-info { display: flex; align-items: center; width: 70%; }
-        .team-logo-sm { width: 28px; height: 28px; object-fit: contain; margin-right: 8px; }
-        .team-name-card { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .team-score { font-weight: 800; font-size: 1.1rem; color: var(--text-dark); }
-        .team-score.winner { color: var(--primary); }
+        .team-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+        .team-info { display: flex; align-items: center; width: 75%; }
+        .team-logo-sm { width: 32px; height: 32px; object-fit: contain; margin-right: 10px; background-color: var(--bg-body); border-radius: 6px; padding: 2px; border: 1px solid var(--border-color);}
+        .team-name-card { font-weight: 700; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+        .team-score { font-weight: 800; font-size: 1.2rem; color: var(--text-main); }
+        .team-score.winner { color: var(--primary) !important; }
 
         .match-meta {
-            margin-top: 1rem;
-            padding-top: 0.75rem;
-            border-top: 1px dashed #e5e7eb;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-top: 1.2rem; padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+            font-size: 0.8rem; color: var(--text-muted); font-weight: 500;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .live-badge {
-            background-color: #FEF2F2; color: #DC2626;
-            font-size: 0.65rem; font-weight: 800;
-            padding: 2px 6px; border-radius: 4px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-        /* --- Tablas --- */
-        .table-pro { width: 100%; border-collapse: separate; border-spacing: 0 0.5rem; }
-        .table-pro thead th {
-            font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
-            font-weight: 600; border: none; padding: 0.75rem 1rem;
-        }
-        .table-pro tbody tr { background: white; transition: all 0.2s; }
-        .table-pro td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid #f3f4f6; }
-
-        .kpi-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); margin-top: 0.25rem; }
-        .custom-select { border: 1px solid #E5E7EB; border-radius: 8px; font-weight: 500; background-color: #F9FAFB; }
         
-        .empty-state { padding: 4rem 2rem; text-align: center; background: white; border-radius: 20px; margin-top: 2rem; box-shadow: var(--card-shadow); }
-        .empty-state i { font-size: 4.5rem; color: #E5E7EB; }
+        .status-badge-neutral {
+            background-color: var(--badge-bg);
+            color: var(--text-muted);
+            padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+            border: 1px solid var(--border-color);
+            text-transform: uppercase;
+        }
+
+        .live-badge {
+            background-color: rgba(230, 74, 25, 0.1); color: var(--primary-dark);
+            font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* --- TABLAS ADAPTADAS A MODO OSCURO --- */
+        .table { --bs-table-bg: transparent; --bs-table-color: var(--text-main); }
+        
+        .table-pro { width: 100%; border-collapse: separate; border-spacing: 0; }
+        
+        .table-pro thead th, .table-light th {
+            font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted) !important;
+            font-weight: 700; border: none; padding: 1rem; 
+            background-color: var(--table-header) !important;
+            letter-spacing: 0.5px;
+        }
+        
+        .table-pro thead th:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .table-pro thead th:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+        
+        .table-pro tbody tr { transition: all 0.2s; background: transparent; }
+        .table-pro tbody tr:hover { background-color: var(--badge-bg); }
+        
+        .table-pro td, .table td { 
+            padding: 1rem; vertical-align: middle; 
+            border-bottom: 1px solid var(--border-color); 
+            color: var(--text-main); font-weight: 500; 
+        }
+
+        /* --- EMPTY STATE Y LOADERS --- */
+        .empty-state { padding: 5rem 2rem; text-align: center; background: var(--bg-card); border-radius: 20px; margin-top: 2rem; border: 1px dashed var(--border-color); }
+        .empty-state i { font-size: 5rem; color: var(--border-color); }
+        
+        .text-dark { color: var(--text-main) !important; }
+        .bg-light { background-color: var(--badge-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
     </style>
 </head>
 <body>
@@ -164,59 +274,92 @@
 <nav class="navbar-glass mb-4 sticky-top">
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
-            <i class="bi bi-basket2-fill text-danger fs-3 me-2"></i>
-            <span class="d-none d-sm-inline" style="font-weight: 800; font-size: 1.25rem;">Basket Pro</span>
+            <i class="bi bi-basket2-fill fs-2 me-2" style="color: var(--primary);"></i>
+            <span class="d-none d-sm-inline fw-bold" style="font-size: 1.4rem; letter-spacing: -0.5px;">Basket Pro</span>
         </div>
-        <div class="flex-grow-1 ms-2 ms-sm-4" style="max-width: 400px;">
-            <select id="tournamentSelect" class="form-select custom-select shadow-sm">
+        <div class="d-flex align-items-center flex-grow-1 justify-content-end ms-2 ms-sm-4">
+            <select id="tournamentSelect" class="form-select custom-select shadow-sm" style="max-width: 320px;">
                 <option value="" disabled selected>Cargando torneos...</option>
             </select>
+            
+            <button id="themeToggleBtn" class="btn btn-theme-toggle ms-3 rounded-circle shadow-sm" aria-label="Cambiar tema">
+                <i class="bi bi-moon-fill fs-5" id="themeIcon"></i>
+            </button>
         </div>
     </div>
 </nav>
 
 <div class="container">
     <div id="loader" class="text-center py-5">
-        <div class="spinner-border text-danger" role="status"></div>
-        <p class="mt-3 text-muted fw-medium">Sincronizando datos...</p>
+        <div class="spinner-border" style="color: var(--primary);" role="status"></div>
+        <p class="mt-3 fw-bold" style="color: var(--text-main);">Analizando estadísticas...</p>
     </div>
 
     <div id="emptyState" style="display: none;">
         <div class="empty-state">
-            <i class="bi bi-database-exclamation mb-3 d-block"></i>
-            <h4 class="fw-bold">Sin actividad registrada</h4>
-            <p class="text-muted">Aún no hay estadísticas disponibles para este torneo.</p>
+            <i class="bi bi-clipboard-data mb-3 d-block"></i>
+            <h3 class="fw-bold">Sin actividad registrada</h3>
+            <p class="fs-5">Aún no hay estadísticas disponibles para este torneo.</p>
         </div>
     </div>
 
-    <div id="dashboardContent" style="display: none; opacity: 0; transition: opacity 0.4s ease;">
+    <div id="dashboardContent" style="display: none; opacity: 0; transition: opacity 0.5s ease;">
         
+        <div class="row mb-5">
+            <div class="col-12">
+                <div id="basketballGallery" class="carousel slide carousel-fade gallery-container d-none" data-bs-ride="carousel" data-bs-interval="4500">
+                    <div class="carousel-indicators" id="galleryIndicators" style="z-index: 5;">
+                        </div>
+                    
+                    <div class="carousel-inner h-100" id="galleryInner">
+                        <div class="carousel-overlay"></div> 
+                        </div>
+                    
+                    <button class="carousel-control-prev" style="z-index: 5;" type="button" data-bs-target="#basketballGallery" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" style="z-index: 5;" type="button" data-bs-target="#basketballGallery" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="row g-3 g-md-4 mb-5">
             <div class="col-md-4">
-                <div class="stat-card d-flex justify-content-between align-items-center border-start border-primary border-4">
-                    <div><div class="kpi-title">Partidos Finalizados</div><div class="kpi-value" id="kpiMatches">0</div></div>
-                    <div class="text-primary fs-1 opacity-25"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Partidos Finalizados</div>
+                        <div class="kpi-value" id="kpiMatches">0</div>
+                    </div>
+                    <div class="icon-container" style="color: var(--primary);"><i class="bi bi-calendar-check-fill"></i></div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card d-flex justify-content-between align-items-center border-start border-info border-4">
-                    <div><div class="kpi-title">Clubes en Competición</div><div class="kpi-value" id="kpiTeams">0</div></div>
-                    <div class="text-info fs-1 opacity-25"><i class="bi bi-shield-shaded"></i></div>
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Clubes en Competición</div>
+                        <div class="kpi-value" id="kpiTeams">0</div>
+                    </div>
+                    <div class="icon-container" style="color: var(--info);"><i class="bi bi-shield-shaded"></i></div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="stat-card d-flex justify-content-between align-items-center border-start border-success border-4">
-                    <div><div class="kpi-title">Promedio de Anotación</div><div class="kpi-value" id="kpiAvg">0</div></div>
-                    <div class="text-success fs-1 opacity-25"><i class="bi bi-lightning-charge"></i></div>
+                <div class="stat-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Promedio de Anotación</div>
+                        <div class="kpi-value" id="kpiAvg">0</div>
+                    </div>
+                    <div class="icon-container" style="color: var(--success);"><i class="bi bi-lightning-charge-fill"></i></div>
                 </div>
             </div>
         </div>
 
         <div class="mb-5">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fw-bold mb-0">Resultados y Calendario</h5>
-                <div id="liveIndicator" class="badge bg-danger bg-opacity-10 text-danger border border-danger d-none">
-                    <span class="spinner-grow spinner-grow-sm me-1" style="width: 0.5rem; height: 0.5rem;"></span> EN VIVO
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h4 class="fw-bold mb-0" style="color: var(--text-main)">Resultados y Calendario</h4>
+                <div id="liveIndicator" class="live-badge d-none">
+                    <span class="spinner-grow spinner-grow-sm me-1" style="width: 0.4rem; height: 0.4rem;"></span> EN VIVO
                 </div>
             </div>
 
@@ -227,20 +370,21 @@
             </div>
 
             <div class="tab-content" id="fixtureContent">
-                <div class="text-center py-4 text-muted small">Selecciona una jornada...</div>
+                <div class="text-center text-muted py-4 small">Selecciona una jornada...</div>
             </div>
         </div>
+        
         <div class="row g-4 mb-5">
             <div class="col-lg-8">
                 <div class="stat-card">
-                    <h6 class="fw-bold mb-4 text-muted text-uppercase small">MVP Race (Puntos Totales)</h6>
+                    <h6 class="fw-bold mb-4 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-trophy me-2"></i>MVP Race (Puntos Totales)</h6>
                     <div style="height: 300px;"><canvas id="scorersChart"></canvas></div>
                 </div>
             </div>
             <div class="col-lg-4">
                 <div class="stat-card">
-                    <h6 class="fw-bold mb-4 text-muted text-uppercase small">Líderes de 3 Puntos</h6>
-                    <div style="height: 300px;"><canvas id="triplesChart"></canvas></div>
+                    <h6 class="fw-bold mb-4 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-bullseye me-2"></i>Líderes de 3 Puntos</h6>
+                    <div style="height: 300px; position: relative;"><canvas id="triplesChart"></canvas></div>
                 </div>
             </div>
         </div>
@@ -248,16 +392,16 @@
         <div class="row g-4 mb-5">
             <div class="col-lg-6">
                 <div class="stat-card">
-                    <h6 class="fw-bold mb-4 text-muted text-uppercase small">Intensidad por Periodo (Q)</h6>
+                    <h6 class="fw-bold mb-4 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-graph-up-arrow me-2"></i>Intensidad por Periodo (Q)</h6>
                     <div style="height: 250px;"><canvas id="periodsChart"></canvas></div>
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="stat-card">
-                    <h6 class="fw-bold mb-4 text-muted text-uppercase small">Muro Defensivo (Prom. Recibido)</h6>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="table-light"><tr><th>Equipo</th><th class="text-end">Promedio</th></tr></thead>
+                <div class="stat-card d-flex flex-column">
+                    <h6 class="fw-bold mb-4 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-shield-lock me-2"></i>Muro Defensivo (Prom. Recibido)</h6>
+                    <div class="table-responsive flex-grow-1">
+                        <table class="table table-pro mb-0">
+                            <thead class="table-light"><tr><th>Equipo</th><th class="text-end">Recibe</th></tr></thead>
                             <tbody id="defenseBody"></tbody>
                         </table>
                     </div>
@@ -267,47 +411,138 @@
 
         <div class="row">
             <div class="col-12">
-                <h5 class="fw-bold mb-4">Tabla General de Posiciones</h5>
-                <div class="table-responsive">
-                    <table class="table-pro">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Equipo</th>
-                                <th class="text-center">JG</th>
-                                <th class="text-center">JP</th>
-                                <th class="text-center">DIF</th>
-                            </tr>
-                        </thead>
-                        <tbody id="standingsBody"></tbody>
-                    </table>
+                <div class="stat-card p-4">
+                    <h4 class="fw-bold mb-4" style="color: var(--text-main)">Tabla General de Posiciones</h4>
+                    <div class="table-responsive">
+                        <table class="table-pro">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Equipo</th>
+                                    <th class="text-center">JG</th>
+                                    <th class="text-center">JP</th>
+                                    <th class="text-center">DIF</th>
+                                </tr>
+                            </thead>
+                            <tbody id="standingsBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     const API_URL = 'https://basket.techsolutions.management/api.php';
     let charts = {};
 
     document.addEventListener("DOMContentLoaded", () => {
+        initThemeToggle(); 
         loadTournaments();
+        loadDynamicGallery(); 
         document.getElementById('tournamentSelect').addEventListener('change', (e) => loadDashboard(e.target.value));
     });
 
+    // --- LÓGICA DEL MODO OSCURO ---
+    function initThemeToggle() {
+        const btn = document.getElementById('themeToggleBtn');
+        const icon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+
+        if (localStorage.getItem('theme') === 'dark') {
+            htmlElement.setAttribute('data-theme', 'dark');
+            icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+        }
+
+        btn.addEventListener('click', () => {
+            if (htmlElement.getAttribute('data-theme') === 'dark') {
+                htmlElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+            } else {
+                htmlElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+            }
+            updateChartTheme(); 
+        });
+    }
+
+    function updateChartTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#94A3B8' : '#64748B'; 
+        const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+        Chart.defaults.color = textColor;
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        Object.values(charts).forEach(chart => {
+            if(chart && chart.options && chart.options.scales) {
+                if(chart.options.scales.x) {
+                    chart.options.scales.x.ticks.color = textColor;
+                    if(chart.options.scales.x.grid) chart.options.scales.x.grid.color = gridColor;
+                }
+                if(chart.options.scales.y) {
+                    chart.options.scales.y.ticks.color = textColor;
+                    if(chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
+                }
+            }
+            if(chart) chart.update();
+        });
+    }
+
+    // --- CARGA DE DATOS ---
     async function loadTournaments() {
         try {
-            const res = await fetch(`${API_URL}?action=get_data`);
+            const res = await fetch(`${API_URL}?action=get_tournaments_list`);
             const json = await res.json();
             const select = document.getElementById('tournamentSelect');
-            if (json.status === 'success' && json.data.tournaments.length > 0) {
-                select.innerHTML = json.data.tournaments.map(t => 
+            
+            if (json.status === 'success' && json.data.length > 0) {
+                select.innerHTML = json.data.map(t => 
                     `<option value="${t.id}">${t.name}</option>`
                 ).join('');
-                loadDashboard(json.data.tournaments[0].id);
+                loadDashboard(json.data[0].id);
+            } else {
+                select.innerHTML = '<option disabled>No hay torneos activos</option>';
             }
         } catch (e) { console.error(e); }
+    }
+
+    async function loadDynamicGallery() {
+        try {
+            const res = await fetch(`${API_URL}?action=get_slider_images`);
+            const json = await res.json();
+            
+            if (json.status === 'success' && json.data.length > 0) {
+                document.getElementById('basketballGallery').classList.remove('d-none');
+                const indicators = document.getElementById('galleryIndicators');
+                const inner = document.getElementById('galleryInner');
+                
+                indicators.innerHTML = '';
+                const overlayHtml = '<div class="carousel-overlay"></div>';
+                let slidesHtml = '';
+
+                json.data.forEach((img, index) => {
+                    const isActive = index === 0 ? 'active' : '';
+                    indicators.innerHTML += `<button type="button" data-bs-target="#basketballGallery" data-bs-slide-to="${index}" class="${isActive}"></button>`;
+                    
+                    slidesHtml += `
+                        <div class="carousel-item ${isActive} h-100">
+                            <div class="slide-content-wrapper">
+                                <img src="${img.url}" class="gallery-bg-blur" alt="bg blur">
+                                <img src="${img.url}" class="gallery-img-main" alt="Jugada ${index+1}">
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                inner.innerHTML = overlayHtml + slidesHtml;
+            }
+        } catch (e) { console.error("Error cargando galería:", e); }
     }
 
     async function loadDashboard(tournamentId) {
@@ -321,11 +556,9 @@
         emptyState.style.display = 'none';
 
         try {
-            // 1. Cargar Estadísticas
             const statsRes = await fetch(`${API_URL}?action=get_dashboard_stats&tournament_id=${tournamentId}`);
             const statsJson = await statsRes.json();
             
-            // 2. Cargar Fixture (Calendario)
             const fixtureRes = await fetch(`${API_URL}?action=get_fixture&tournament_id=${tournamentId}`);
             const fixtureJson = await fixtureRes.json();
 
@@ -338,7 +571,6 @@
                     return;
                 }
 
-                // Renderizar Stats
                 document.getElementById('kpiMatches').innerText = d.stats.total_matches;
                 document.getElementById('kpiTeams').innerText = d.stats.total_teams;
                 document.getElementById('kpiAvg').innerText = parseFloat(d.stats.avg_points).toFixed(1);
@@ -346,14 +578,15 @@
                 renderScorersChart(d.top_scorers);
                 renderTriplesChart(d.top_triples);
                 renderPeriodsChart(d.periods);
+                updateChartTheme(); 
+                
                 renderDefenseTable(d.best_defense);
                 renderStandings(d.standings);
 
-                // Renderizar Fixture
                 if(fixtureJson.status === 'success' && fixtureJson.data.rounds) {
                     renderFixture(fixtureJson.data.rounds);
                 } else {
-                    document.getElementById('fixtureContent').innerHTML = '<div class="alert alert-light border text-center">Calendario no disponible.</div>';
+                    document.getElementById('fixtureContent').innerHTML = '<div class="alert alert-secondary text-center">Calendario no disponible.</div>';
                 }
 
                 loader.style.display = 'none';
@@ -363,7 +596,7 @@
         } catch (e) { console.error(e); }
     }
 
-    // --- NUEVO: RENDERIZADO DEL FIXTURE PÚBLICO ---
+    // --- RENDERIZADO DEL FIXTURE ---
     function renderFixture(rounds) {
         const tabsContainer = document.getElementById('fixtureTabs');
         const contentContainer = document.getElementById('fixtureContent');
@@ -374,20 +607,16 @@
         let hasLiveGames = false;
 
         if (!rounds || Object.keys(rounds).length === 0) {
-            contentContainer.innerHTML = '<div class="text-center text-muted py-3">No hay partidos programados.</div>';
+            contentContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>No hay partidos programados.</div>';
             return;
         }
 
-        // Encontrar la jornada "actual" (la primera que tenga partidos pendientes o en juego)
         let activeRoundIndex = 0;
         let index = 0;
         let foundActive = false;
 
         for (const [roundName, matches] of Object.entries(rounds)) {
-            // Verificar si hay partidos en vivo para activar el indicador global
             if (matches.some(m => m.status === 'PLAYING')) hasLiveGames = true;
-
-            // Lógica para seleccionar tab por defecto: primera jornada con partidos no finalizados
             if (!foundActive && matches.some(m => m.status !== 'FINISHED')) {
                 activeRoundIndex = index;
                 foundActive = true;
@@ -398,7 +627,9 @@
         if (hasLiveGames) liveIndicator.classList.remove('d-none');
         else liveIndicator.classList.add('d-none');
 
-        // Renderizar Tabs y Contenido
+        let tabsHtml = '';
+        let panesHtml = '';
+
         index = 0;
         for (const [roundName, matches] of Object.entries(rounds)) {
             const safeId = roundName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -406,29 +637,46 @@
             const activeClass = isActive ? 'active' : '';
             const showClass = isActive ? 'show active' : '';
 
-            // Tab
-            tabsContainer.innerHTML += `
-                <li class="nav-item">
-                    <button class="nav-link ${activeClass}" data-bs-toggle="pill" data-bs-target="#tab_${safeId}" type="button">
+            tabsHtml += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link ${activeClass}" id="tab-btn-${safeId}" data-bs-toggle="pill" data-bs-target="#tab_${safeId}" type="button" role="tab" aria-controls="tab_${safeId}" aria-selected="${isActive}">
                         ${roundName}
                     </button>
                 </li>`;
 
-            // Partidos
             let matchesHtml = matches.map(m => {
-                const dateStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'}) : 'TBD';
+                const dateStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'}) : 'Sin definir';
                 const timeStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
                 
-                // Estados
                 let statusBadge = '';
-                if(m.status === 'PLAYING') statusBadge = '<div class="live-badge">EN VIVO</div>';
-                else if(m.status === 'FINISHED') statusBadge = '<span class="badge bg-light text-muted border">Final</span>';
-                else statusBadge = `<span class="text-muted small"><i class="bi bi-clock me-1"></i>${timeStr}</span>`;
-
-                // Resultados (si existen, asumimos que vienen en el objeto o se calculan, aquí simulamos visualización)
-                // Nota: Tu API actual de fixture trae datos básicos. Si quieres marcadores en vivo aquí, 
-                // necesitarías unir con la tabla matches real. Por ahora mostramos estructura.
+                let pdfButton = '';
                 
+                if(m.status === 'PLAYING') {
+                    statusBadge = '<div class="live-badge">EN VIVO</div>';
+                } else if(m.status === 'FINISHED') {
+                    statusBadge = '<span class="status-badge-neutral">Final</span>';
+                    if (m.pdf_url) {
+                        pdfButton = `<a href="${m.pdf_url}" target="_blank" class="btn btn-sm btn-outline-danger mt-3 w-100 fw-bold"><i class="bi bi-file-earmark-pdf-fill me-1"></i> Ver Acta Oficial</a>`;
+                    }
+                } else {
+                    statusBadge = `<span class="status-badge-neutral"><i class="bi bi-clock me-1"></i>${timeStr || 'Pendiente'}</span>`;
+                }
+
+                let scoreA = '';
+                let scoreB = '';
+                let winnerAClass = '';
+                let winnerBClass = '';
+
+                if (m.status === 'FINISHED' || m.status === 'PLAYING') {
+                    scoreA = m.score_a !== null ? m.score_a : '0';
+                    scoreB = m.score_b !== null ? m.score_b : '0';
+                    
+                    if (m.status === 'FINISHED') {
+                        if (parseInt(scoreA) > parseInt(scoreB)) winnerAClass = 'winner';
+                        if (parseInt(scoreB) > parseInt(scoreA)) winnerBClass = 'winner';
+                    }
+                }
+
                 return `
                 <div class="col-md-6 col-lg-4 mb-3">
                     <div class="match-card" data-status="${m.status}">
@@ -436,61 +684,70 @@
                         <div class="match-card-body">
                             <div class="team-row">
                                 <div class="team-info">
-                                    <img src="${m.logo_a || `https://ui-avatars.com/api/?name=${m.team_a}&background=f3f4f6&color=6b7280`}" class="team-logo-sm rounded">
-                                    <span class="team-name-card">${m.team_a}</span>
+                                    <img src="${m.logo_a || `https://ui-avatars.com/api/?name=${m.team_a}&background=random&color=fff`}" class="team-logo-sm">
+                                    <span class="team-name-card ${winnerAClass}">${m.team_a}</span>
                                 </div>
-                                <span class="team-score"></span> </div>
+                                <span class="team-score ${winnerAClass}">${scoreA}</span> 
+                            </div>
                             
                             <div class="team-row mb-0">
                                 <div class="team-info">
-                                    <img src="${m.logo_b || `https://ui-avatars.com/api/?name=${m.team_b}&background=f3f4f6&color=6b7280`}" class="team-logo-sm rounded">
-                                    <span class="team-name-card">${m.team_b}</span>
+                                    <img src="${m.logo_b || `https://ui-avatars.com/api/?name=${m.team_b}&background=random&color=fff`}" class="team-logo-sm">
+                                    <span class="team-name-card ${winnerBClass}">${m.team_b}</span>
                                 </div>
-                                <span class="team-score"></span> </div>
+                                <span class="team-score ${winnerBClass}">${scoreB}</span> 
+                            </div>
 
                             <div class="match-meta">
                                 <div><i class="bi bi-calendar-event me-1"></i>${dateStr}</div>
                                 <div>${statusBadge}</div>
-                                <div><i class="bi bi-geo-alt me-1"></i>${m.venue_name || 'Sede'}</div>
+                                <div><i class="bi bi-geo-alt me-1"></i>${m.venue_name || 'Sede Local'}</div>
                             </div>
+                            
+                            ${pdfButton}
                         </div>
                     </div>
                 </div>`;
             }).join('');
 
-            contentContainer.innerHTML += `
-                <div class="tab-pane fade ${showClass}" id="tab_${safeId}">
+            panesHtml += `
+                <div class="tab-pane fade ${showClass}" id="tab_${safeId}" role="tabpanel" aria-labelledby="tab-btn-${safeId}">
                     <div class="row g-3">${matchesHtml}</div>
                 </div>`;
             
             index++;
         }
+
+        tabsContainer.innerHTML = tabsHtml;
+        contentContainer.innerHTML = panesHtml;
     }
 
     function getTeamLogo(teamName, logoUrl) {
-        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=random&color=fff&size=128`;
+        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(teamName)}&background=random&color=fff`;
         const src = logoUrl ? `../${logoUrl}` : fallback;
-        return `<img src="${src}" class="team-logo-analytics" onerror="this.src='${fallback}'">`;
+        return `<img src="${src}" class="team-logo-sm" style="width: 32px; height:32px; padding:0;" onerror="this.src='${fallback}'">`;
     }
 
     function renderStandings(teams) {
         const tbody = document.getElementById('standingsBody');
-        tbody.innerHTML = teams.map((t, i) => `
+        tbody.innerHTML = teams.map((t, i) => {
+            const isFirst = i === 0 ? 'color: #F59E0B; font-size: 1.1rem;' : '';
+            return `
             <tr>
-                <td class="fw-bold text-muted">${i + 1}</td>
+                <td class="fw-bold" style="${isFirst}">${i + 1}</td>
                 <td>
                     <div class="d-flex align-items-center">
                         ${getTeamLogo(t.team, t.logo_url)}
-                        <span class="fw-bold text-dark">${t.team}</span>
+                        <span class="fw-bold ms-2">${t.team}</span>
                     </div>
                 </td>
-                <td class="text-center fw-bold">${t.w}</td>
-                <td class="text-center text-muted">${t.l}</td>
+                <td class="text-center fw-bold text-success">${t.w}</td>
+                <td class="text-center fw-bold text-danger">${t.l}</td>
                 <td class="text-center fw-bold ${t.point_diff > 0 ? 'text-success' : 'text-danger'}">
                     ${t.point_diff > 0 ? '+' : ''}${t.point_diff}
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     }
 
     function renderDefenseTable(teams) {
@@ -500,10 +757,10 @@
                 <td>
                     <div class="d-flex align-items-center">
                         ${getTeamLogo(t.team, t.logo_url)}
-                        <span class="fw-bold small">${t.team}</span>
+                        <span class="fw-bold ms-2 small">${t.team}</span>
                     </div>
                 </td>
-                <td class="text-end text-success fw-bold">${parseFloat(t.avg_allowed).toFixed(1)} pts</td>
+                <td class="text-end fw-bold" style="color: var(--primary);">${parseFloat(t.avg_allowed).toFixed(1)} <span class="fw-normal small">pts</span></td>
             </tr>
         `).join('');
     }
@@ -511,6 +768,11 @@
     function renderScorersChart(data) {
         const ctx = document.getElementById('scorersChart').getContext('2d');
         if (charts.scorers) charts.scorers.destroy();
+        
+        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, '#FF5722');
+        gradient.addColorStop(1, '#E64A19');
+
         charts.scorers = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -518,15 +780,18 @@
                 datasets: [{
                     label: 'Puntos',
                     data: data.map(p => p.total_points),
-                    backgroundColor: '#FF5722',
-                    borderRadius: 8
+                    backgroundColor: gradient,
+                    borderRadius: 6,
+                    borderSkipped: false
                 }]
             },
             options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { x: { grid: { display: false } }, y: { grid: { borderDash: [5,5] } } }
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false }, tooltip: { cornerRadius: 10, padding: 12 } },
+                scales: { 
+                    x: { grid: { display: false } }, 
+                    y: { grid: { borderDash: [4,4] }, beginAtZero: true } 
+                }
             }
         });
     }
@@ -540,15 +805,16 @@
                 labels: data.map(p => p.name),
                 datasets: [{
                     data: data.map(p => p.triples_made),
-                    backgroundColor: ['#1F2937', '#FF5722', '#F59E0B', '#10B981', '#6366F1'],
-                    borderWidth: 0
+                    backgroundColor: ['#FF5722', '#F59E0B', '#10B981', '#6366F1', '#8B5CF6'],
+                    borderWidth: 0,
+                    hoverOffset: 4
                 }]
             },
             options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                cutout: '75%',
-                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+                responsive: true, maintainAspectRatio: false, cutout: '75%',
+                plugins: { 
+                    legend: { position: 'right', labels: { usePointStyle: true, padding: 20, font: {family: 'Inter'} } } 
+                }
             }
         });
     }
@@ -561,20 +827,24 @@
             data: {
                 labels: data.map(p => 'Q' + p.period),
                 datasets: [{
-                    label: 'Puntos Totales',
+                    label: 'Intensidad de Juego',
                     data: data.map(p => p.total),
                     borderColor: '#10B981',
+                    borderWidth: 3,
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
                     fill: true,
-                    pointBackgroundColor: '#10B981'
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#10B981',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, grid: { borderDash: [5,5] } } }
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { display: false }, tooltip: { intersect: false, mode: 'index' } },
+                scales: { y: { beginAtZero: true, grid: { borderDash: [4,4] } } }
             }
         });
     }

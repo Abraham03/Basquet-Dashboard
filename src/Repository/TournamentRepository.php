@@ -4,7 +4,7 @@ class TournamentRepository {
     private mysqli $db;
 
     public function __construct(Database $db) {
-        $this->db = $db -> getConnection();
+        $this->db = $db->getConnection();
     }
     
     public function getTournamentData($id) {
@@ -15,17 +15,21 @@ class TournamentRepository {
     }
     
     public function createTournament($name, $category) {
-                 Logger::write("TournamentRepository: Cruando nuevo torneo");
-    
+        Logger::write("TournamentRepository: Creando nuevo torneo");
         $stmt = $this->db->prepare("INSERT INTO tournaments (name, category) VALUES (?, ?)");
-        return $stmt->execute([$name, $category]);
+        
+        // Cambiamos el return para obtener el ID insertado
+        if ($stmt->execute([$name, $category])) {
+            return $this->db->insert_id; // <--- DEVOLVER EL ID REAL
+        }
+        return 0;
     }
     
     public function update($id, $name, $category) {
-            $stmt = $this->db->prepare("UPDATE tournaments SET name = ?, category = ? WHERE id = ?");
-            $stmt->bind_param("ssi", $name, $category, $id);
-            return $stmt->execute();
-        }
+        $stmt = $this->db->prepare("UPDATE tournaments SET name = ?, category = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $name, $category, $id);
+        return $stmt->execute();
+    }
     
     public function delete($id) {
         $stmt = $this->db->prepare("DELETE FROM tournaments WHERE id = ?");
@@ -34,38 +38,49 @@ class TournamentRepository {
     }
 
     public function getFixtureData($tournamentId) {
-            // 1. Obtener nombre torneo
-            $tObj = $this->getTournamentData($tournamentId);
-            $tName = $tObj['name'] ?? 'Torneo';
+        // 1. Obtener nombre torneo
+        $tObj = $this->getTournamentData($tournamentId);
+        $tName = $tObj['name'] ?? 'Torneo';
+    
+        // 2. Obtener partidos (Agregamos COLLATE para evitar el error Illegal mix of collations)
+        $sql = "SELECT f.*, 
+                r.name as round_name, 
+                ta.name as team_a, ta.logo_url as logo_a,
+                tb.name as team_b, tb.logo_url as logo_b,
+                v.name as venue_name,
+                m.score_a, m.score_b, m.pdf_url, m.status as match_status
+                FROM fixtures f
+                JOIN tournament_rounds r ON f.round_id = r.id
+                JOIN teams ta ON f.team_a_id = ta.id
+                JOIN teams tb ON f.team_b_id = tb.id
+                LEFT JOIN venues v ON f.venue_id = v.id
+                LEFT JOIN matches m ON f.match_id COLLATE utf8mb4_unicode_ci = m.id COLLATE utf8mb4_unicode_ci
+                WHERE f.tournament_id = ?
+                ORDER BY r.round_order ASC, f.id ASC";
+                
+        $stmt = $this->db->prepare($sql);
+        if (!$stmt) {
+            Logger::write("Error prepare getFixtureData: " . $this->db->error);
+            throw new Exception("Error en la base de datos al cargar el fixture.");
+        }
+
+        $stmt->bind_param("i", $tournamentId);
+        $stmt->execute();
+        $res = $stmt->get_result();
         
-            // 2. Obtener partidos (AGREGAMOS logo_url)
-            $sql = "SELECT f.*, 
-                    r.name as round_name, 
-                    ta.name as team_a, ta.logo_url as logo_a,
-                    tb.name as team_b, tb.logo_url as logo_b,
-                    v.name as venue_name
-                    FROM fixtures f
-                    JOIN tournament_rounds r ON f.round_id = r.id
-                    JOIN teams ta ON f.team_a_id = ta.id
-                    JOIN teams tb ON f.team_b_id = tb.id
-                    LEFT JOIN venues v ON f.venue_id = v.id
-                    WHERE f.tournament_id = ?
-                    ORDER BY r.round_order ASC, f.id ASC";
-                    
-            $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("i", $tournamentId);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            
-            $rounds = [];
-            while($row = $res->fetch_assoc()) {
-                $rounds[$row['round_name']][] = $row;
+        $rounds = [];
+        while($row = $res->fetch_assoc()) {
+            // Forzamos el status de matches si existe y está FINISHED
+            if (!empty($row['match_status'])) {
+                $row['status'] = $row['match_status'];
             }
-            
-            return ['tournament_name' => $tName, 'rounds' => $rounds];
+            $rounds[$row['round_name']][] = $row;
         }
         
-        public function updateFixtureMatch($matchId, $datetime, $venueId, $status) {
+        return ['tournament_name' => $tName, 'rounds' => $rounds];
+    }
+        
+    public function updateFixtureMatch($matchId, $datetime, $venueId, $status) {
         $stmt = $this->db->prepare("UPDATE fixtures SET scheduled_datetime = ?, venue_id = ?, status = ? WHERE id = ?");
         // 'sisi' -> string, integer (o null), string, integer
         $stmt->bind_param("sisi", $datetime, $venueId, $status, $matchId);
@@ -74,28 +89,28 @@ class TournamentRepository {
     }
 
     public function saveRules($tournamentId, $rules) {
-         Logger::write("TournamentRepository: Guardando reglas");
-            $stmt = $this->db->prepare("INSERT INTO tournament_rules 
-                (tournament_id, matchups_per_pair, points_win, points_draw, points_loss, points_forfeit_win, points_forfeit_loss)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                matchups_per_pair = VALUES(matchups_per_pair),
-                points_win = VALUES(points_win),
-                points_draw = VALUES(points_draw),
-                points_loss = VALUES(points_loss)");
-            
-            $stmt->bind_param("iiiiiii", 
-                $tournamentId, 
-                $rules['matchups_per_pair'], 
-                $rules['points_win'], 
-                $rules['points_draw'], 
-                $rules['points_loss'],
-                $rules['points_forfeit_win'],
-                $rules['points_forfeit_loss']
-            );
-            $stmt->execute();
-            $stmt->close();
-        }
+        Logger::write("TournamentRepository: Guardando reglas");
+        $stmt = $this->db->prepare("INSERT INTO tournament_rules 
+            (tournament_id, matchups_per_pair, points_win, points_draw, points_loss, points_forfeit_win, points_forfeit_loss)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+            matchups_per_pair = VALUES(matchups_per_pair),
+            points_win = VALUES(points_win),
+            points_draw = VALUES(points_draw),
+            points_loss = VALUES(points_loss)");
+        
+        $stmt->bind_param("iiiiiii", 
+            $tournamentId, 
+            $rules['matchups_per_pair'], 
+            $rules['points_win'], 
+            $rules['points_draw'], 
+            $rules['points_loss'],
+            $rules['points_forfeit_win'],
+            $rules['points_forfeit_loss']
+        );
+        $stmt->execute();
+        $stmt->close();
+    }
 
     // 2. Crear Jornada (Round)
     public function createRound($tournamentId, $name, $order, $date = null) {
@@ -119,7 +134,6 @@ class TournamentRepository {
     public function clearFixture($tournamentId) {
         // Al borrar el torneo se borra en cascada, pero si regeneramos, limpiamos manual
         $this->db->query("DELETE FROM tournament_rounds WHERE tournament_id = $tournamentId"); 
-        // Fixtures se borran solos por la FK en cascada con rounds, o puedes borrarlos explícitamente.
     }
     
     // 5. Obtener IDs de equipos del torneo
@@ -134,6 +148,5 @@ class TournamentRepository {
         }
         return $ids;
     }
-    
 }
 ?>

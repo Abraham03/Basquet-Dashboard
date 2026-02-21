@@ -45,7 +45,12 @@ class Router {
                     break;
                 case 'get_data_by_tournament':(new CatalogController())->getDataByTournament();
                     break;    
-                case 'get_fixture': (new TournamentController())->getFixture($_GET['tournament_id'] ?? 0);    
+                case 'get_fixture': (new TournamentController())->getFixture($_GET['tournament_id'] ?? 0);
+                    break;
+                case 'get_sync_data': 
+                    $tid = isset($_GET['tournament_id']) ? (int)$_GET['tournament_id'] : 0;
+                    (new CatalogController())->getSyncData($tid);
+                    break;
                     
                 // --- Creacion
                 case 'create_tournament':(new TournamentController())->create($input);
@@ -56,11 +61,11 @@ class Router {
                     break;
                     
                 case 'generate_fixture': 
-                    // Validación rápida antes de llamar al controlador
-                    if(empty($input)) {
-                        throw new Exception("El cuerpo de la petición está vacío (JSON inválido)");
-                    }
-                    (new TournamentController())->generateFixture($input); 
+                        // Validación rápida antes de llamar al controlador
+                        if(empty($input)) {
+                            throw new Exception("El cuerpo de la petición está vacío (JSON inválido)");
+                        }
+                        (new TournamentController())->generateFixture($input); 
                     break;    
                     
                 // --- ACTUALIZACIÓN 
@@ -84,8 +89,18 @@ class Router {
                     break;    
 
                 // Sincronizacion Flutter
-                case 'sync_match':(new MatchController())->sync($input);
+                case 'sync_match':
+                        // Si viene como multipart (con archivo), los datos JSON están en $_POST['data']
+                        if (isset($_POST['data'])) {
+                            $input = json_decode($_POST['data'], true);
+                        }
+                        (new MatchController())->sync($input);
                     break;
+                    
+                // --- Galería Slider
+                case 'get_slider_images': (new GalleryController())->getImages(); break;
+                case 'upload_slider_image': (new GalleryController())->uploadImage(); break;
+                case 'delete_slider_image': (new GalleryController())->deleteImage($input); break;    
                     
                
                     break;   

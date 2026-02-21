@@ -17,5 +17,11 @@ class CatalogController {
         $data = $this->repo->getDataByTournament($id);
         Response::json(['status' => 'success', 'data' => $data]);
     }
+    
+    public function getSyncData($tournamentId) {
+        // repo debe ser una instancia de CatalogRepository
+        $data = $this->repo->getSyncData((int)$tournamentId);
+        Response::json(['status' => 'success', 'data' => $data]);
+    }
 }
 ?>

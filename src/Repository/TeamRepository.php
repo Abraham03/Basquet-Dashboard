@@ -9,20 +9,20 @@ class TeamRepository {
 
 
 
-// Asegúrate de actualizar createTeam para recibir tournament_id si tu BD lo soporta
-public function createTeam($name, $shortName, $coach, $logoUrl) {
-    Logger::write("TeamRepository: Crando equipo $name");
-
-    // Asumiendo que agregaste la columna tournament_id a la tabla teams
+    public function createTeam($name, $shortName, $coach, $logoUrl) {
+    Logger::write("TeamRepository: Creando equipo $name");
     $sql = "INSERT INTO teams (name, short_name, coach_name, logo_url) VALUES (?, ?, ?, ?)";
     $stmt = $this->db->prepare($sql);
-    if ($stmt->execute([$name, $shortName, $coach, $logoUrl])) {
-         Logger::write("TeamRepository: Crado con exito equipo $name");
-            // CORRECCIÓN: Devolver el ID generado, no el resultado de execute()
-            return $stmt->insert_id; 
-        }
-        return 0; // O lanzar excepción si falló
-}
+    
+    // Usar bind_param es más seguro para manejar tipos
+    $stmt->bind_param("ssss", $name, $shortName, $coach, $logoUrl);
+    
+    if ($stmt->execute()) {
+        Logger::write("TeamRepository: Creado con éxito equipo $name");
+        return $this->db->insert_id; 
+    }
+    return 0;
+    }
 
 
 

@@ -62,37 +62,29 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         .nav-link-custom.active { background: rgba(255, 87, 34, 0.15); color: var(--primary-color); border-left-color: var(--primary-color); }
         .logout-btn { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; }
 
-        /* --- TABLAS Y PAGINACIÓN --- */
+        /* --- TABLAS Y CARDS --- */
         .card { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .table { margin-bottom: 0; }
-        .table thead th { 
-            background: #f8f9fa; border-top: none; font-size: 0.75rem; 
-            color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; padding: 1rem;
-        }
+        .table thead th { background: #f8f9fa; border-top: none; font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; padding: 1rem; }
         .table tbody td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid #f1f1f1; }
         .table-hover tbody tr:hover { background-color: #fafafa; }
-        
         .team-logo-table { width: 40px; height: 40px; object-fit: contain; background: white; border-radius: 50%; border: 1px solid #eee; padding: 2px; }
         
         /* Botones de Acción */
-        .btn-icon { 
-            width: 32px; height: 32px; padding: 0; display: inline-flex; 
-            align-items: center; justify-content: center; border-radius: 8px; 
-            transition: all 0.2s; 
-        }
+        .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; }
         .btn-icon:hover { background-color: #f1f5f9; transform: translateY(-1px); }
         .btn-action-group { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 4px; display: inline-flex; }
 
         /* Paginación Personalizada */
         .pagination-container { padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .page-info { font-size: 0.85rem; color: #6c757d; }
-        .btn-page { 
-            border: 1px solid #e2e8f0; background: white; color: #1e293b; 
-            padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-left: 0.25rem;
-        }
+        .btn-page { border: 1px solid #e2e8f0; background: white; color: #1e293b; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-left: 0.25rem; }
         .btn-page:hover:not(:disabled) { background: #f8f9fa; border-color: #cbd5e1; }
         .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        /* Estilos de la Galería */
+        .admin-gallery-img { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid #dee2e6; }
+        .img-delete-btn { position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -103,9 +95,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <div id="sidebar-wrapper">
         <div class="sidebar-header">
             <span class="sidebar-brand"><i class="bi bi-basket2-fill text-warning me-2"></i>BASKET PRO</span>
-            <button class="btn btn-link text-white d-md-none p-0" onclick="toggleMenu()">
-                <i class="bi bi-x-lg fs-4"></i>
-            </button>
+            <button class="btn btn-link text-white d-md-none p-0" onclick="toggleMenu()"><i class="bi bi-x-lg fs-4"></i></button>
         </div>
         <div class="nav flex-column mt-3">
             <a href="#" class="nav-link-custom active" data-bs-toggle="pill" data-bs-target="#tab-tournaments">
@@ -117,6 +107,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-players">
                 <i class="bi bi-people"></i> Jugadores
             </a>
+            <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-gallery" onclick="loadGallery()">
+                <i class="bi bi-images"></i> Slider Home
+            </a>
         </div>
         <div class="logout-btn">
             <button class="btn btn-outline-danger w-100 border-0 text-start ps-3" onclick="logout()">
@@ -127,9 +120,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
     <div id="page-content-wrapper">
         <nav class="navbar navbar-expand navbar-light bg-white border-bottom px-4 py-3 sticky-top shadow-sm">
-            <button class="btn btn-light rounded-circle shadow-sm me-3" id="menu-toggle">
-                <i class="bi bi-list fs-4"></i>
-            </button>
+            <button class="btn btn-light rounded-circle shadow-sm me-3" id="menu-toggle"><i class="bi bi-list fs-4"></i></button>
             <h5 class="mb-0 fw-bold d-none d-sm-block">Panel de Administración</h5>
             <div class="ms-auto d-flex align-items-center">
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; font-weight: 700;">A</div>
@@ -138,7 +129,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
         <div class="container-fluid p-4">
             
-            <div class="filter-container d-flex align-items-center p-3 mb-4 shadow-sm border-0 bg-white rounded-4">
+            <div class="filter-container d-flex align-items-center p-3 mb-4 shadow-sm border-0 bg-white rounded-4" id="mainFilterBar">
                 <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-3">
                     <i class="bi bi-funnel-fill fs-5"></i>
                 </div>
@@ -159,7 +150,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <p class="text-muted mb-0">Gestión global de competiciones</p>
                         </div>
                         <button class="btn btn-primary rounded-pill px-4 shadow" onclick="openModal('modalTournament')">
-                            <i class="bi bi-plus-lg me-2"></i>Nuevo Torneo
+                            <i class="bi bi-plus-lg me-2"></i>Nuevo
                         </button>
                     </div>
                     <div class="card overflow-hidden">
@@ -218,6 +209,22 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         </div>
                         <div class="pagination-container border-top" id="paginationPlayers"></div>
                     </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-gallery">
+                    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+                        <div>
+                            <h3 class="fw-bold mb-1">Galería Pública (Slider)</h3>
+                            <p class="text-muted mb-0">Administra las fotos de portada de la web pública.</p>
+                        </div>
+                        <button class="btn btn-primary rounded-pill px-4 shadow" onclick="document.getElementById('uploadGalleryInput').click()">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i>Subir Imagen
+                        </button>
+                        <input type="file" id="uploadGalleryInput" accept="image/jpeg, image/png, image/webp" style="display: none;" onchange="uploadGalleryImage(this)">
+                    </div>
+
+                    <div class="row g-4" id="galleryContainer">
+                        </div>
                 </div>
 
             </div>

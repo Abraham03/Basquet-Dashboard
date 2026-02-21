@@ -16,6 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTournamentsList(); 
     loadFilteredData(0); 
     setupForms();
+
+    // Escuchar el cambio de pestañas para ocultar la barra de filtros si estamos en Galería
+    document.querySelectorAll('button[data-bs-toggle="pill"], a[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', event => {
+            const targetId = event.target.getAttribute('data-bs-target');
+            document.getElementById('mainFilterBar').style.display = (targetId === '#tab-gallery') ? 'none' : 'flex';
+        });
+    });
 });
 
 // --- HELPER: SKELETON LOADER ---
@@ -213,7 +221,7 @@ function initializeTooltips() {
 }
 
 
-// --- TEMPLATES HTML (Aquí estaba el error) ---
+// --- TEMPLATES HTML ---
 
 const rowTournamentTemplate = (t) => `
     <tr>
@@ -263,12 +271,8 @@ const rowTeamTemplate = (t) => {
     </tr>`;
 };
 
-// --- CORRECCIÓN EN ESTA FUNCIÓN ---
 const rowPlayerTemplate = (p) => {
-    // CORRECCIÓN: Usar 'allTeams' en lugar de 'currentTeamsData'
     const team = allTeams.find(t => t.id == p.team_id);
-    
-    // Fallback por si el equipo no se encuentra (borrado o null)
     const teamName = team ? team.name : '<span class="text-muted small">Sin Equipo</span>';
     
     return `
@@ -430,4 +434,71 @@ function fillSelect(id, items, empty) {
 function fillSelectTeams(items, id, all) {
     const s = document.getElementById(id); if(!s) return;
     s.innerHTML = (all ? '<option value="0">Todos los Equipos</option>' : '<option value="">Seleccione Equipo...</option>') + items.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+}
+
+// --- NUEVO: FUNCIONES DE GALERÍA ---
+async function loadGallery() {
+    const container = document.getElementById('galleryContainer');
+    container.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div></div>';
+    
+    try {
+        const res = await fetch(`${API_URL}?action=get_slider_images`);
+        const json = await res.json();
+        
+        if (json.status === 'success') {
+            if(json.data.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center py-5 text-muted"><i class="bi bi-images fs-1 d-block mb-3"></i>No hay imágenes en la galería. Sube una.</div>';
+                return;
+            }
+
+            container.innerHTML = json.data.map(img => `
+                <div class="col-md-4 col-lg-3">
+                    <div class="position-relative">
+                        <img src="../${img.url}" class="admin-gallery-img shadow-sm" alt="Slider">
+                        <button class="btn btn-danger img-delete-btn" onclick="deleteGalleryImage('${img.filename}')" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch(e) { console.error("Error cargando galería:", e); }
+}
+
+async function uploadGalleryImage(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const formData = new FormData();
+    formData.append('image', input.files[0]);
+    formData.append('action', 'upload_slider_image');
+
+    input.value = ''; // Resetear input
+    
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: formData });
+        const json = await res.json();
+        if(json.status === 'success') {
+            loadGallery(); // Recargar imágenes
+        } else {
+            alert(json.message);
+        }
+    } catch(e) { alert("Error al subir imagen"); }
+}
+
+async function deleteGalleryImage(filename) {
+    if(!confirm('¿Eliminar esta imagen del slider web?')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}?action=delete_slider_image`, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({filename: filename})
+        });
+        const json = await res.json();
+        if(json.status === 'success') {
+            loadGallery(); 
+        } else {
+            alert(json.message);
+        }
+    } catch(e) { alert("Error al eliminar"); }
 }

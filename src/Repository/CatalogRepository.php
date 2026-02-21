@@ -10,6 +10,68 @@ class CatalogRepository {
     public function __construct(Database $db) {
         $this->db = $db -> getConnection();
     }
+    
+
+    public function getSyncData(int $tournamentId): array {
+        Logger::write("CatalogRepository: Obteniendo datos de sincronización. Torneo ID: $tournamentId");
+        
+        $teams = [];
+        $players = [];
+        $relationships = [];
+        $fixtures = [];
+
+        // Si mandamos un ID de torneo mayor a 0, traemos su información pesada
+        if ($tournamentId > 0) {
+            $teams = $this->fetchAll("
+                SELECT t.* FROM teams t 
+                INNER JOIN tournament_teams tt ON t.id = tt.team_id 
+                WHERE tt.tournament_id = $tournamentId
+            ");
+            
+            $players = $this->fetchAll("
+                SELECT p.* FROM players p 
+                INNER JOIN tournament_teams tt ON p.team_id = tt.team_id 
+                WHERE tt.tournament_id = $tournamentId AND p.active = 1
+            ");
+            
+            $relationships = $this->fetchAll("
+                SELECT tournament_id, team_id FROM tournament_teams WHERE tournament_id = $tournamentId
+            ");
+            
+            $fixtures = $this->fetchAll("
+                SELECT f.*, 
+                r.name as round_name, 
+                ta.name as team_a, ta.logo_url as logo_a,
+                tb.name as team_b, tb.logo_url as logo_b,
+                v.name as venue_name,
+                m.score_a, m.score_b, m.pdf_url, m.status as match_status
+                FROM fixtures f
+                JOIN tournament_rounds r ON f.round_id = r.id
+                JOIN teams ta ON f.team_a_id = ta.id
+                JOIN teams tb ON f.team_b_id = tb.id
+                LEFT JOIN venues v ON f.venue_id = v.id
+                LEFT JOIN matches m ON f.match_id COLLATE utf8mb4_unicode_ci = m.id COLLATE utf8mb4_unicode_ci
+                WHERE f.tournament_id = $tournamentId
+                ORDER BY r.round_order ASC, f.id ASC
+            ");
+            // Procesar el status de los partidos terminados
+            foreach ($fixtures as &$fixture) {
+                if (!empty($fixture['match_status'])) {
+                    $fixture['status'] = $fixture['match_status'];
+                }
+            }
+        }
+
+        return [
+            // Siempre enviamos torneos y sedes (pesan muy poco)
+            'tournaments' => $this->fetchAll("SELECT * FROM tournaments WHERE status='ACTIVE'"),
+            'venues'      => $this->fetchAll("SELECT * FROM venues"),
+            'teams'       => $teams,
+            'players'     => $players,
+            'tournament_teams' => $relationships,
+            'fixtures'    => $fixtures
+        ];
+    }
 
     /**
      * Obtiene todos los catálogos necesarios para inicializar la App.
