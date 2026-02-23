@@ -1,5 +1,5 @@
 <?php
-class PlayerController {
+class PlayerController extends BaseController {
     private $repo;
 
     public function __construct() {
@@ -7,45 +7,81 @@ class PlayerController {
         $this->repo = new PlayerRepository(Database::getInstance());
     }
 
-
-
     public function addPlayer($data) {
-        if (empty($data['teamId']) || empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'Team ID and Name requerido'], 400);
-        }
+        // 1. Sanitizar la entrada para evitar XSS
+        $cleanData = $this->sanitize($data);
 
-        $newId = $this->repo->createPlayer(
-            (int)$data['teamId'],
-            $data['name'],
-            (int)($data['number'] ?? 0)
-        );
-
-        Response::json([
-            'status' => 'success', 
-            'message' => 'Player added', 
-            'newId' => $newId
+        // 2. Validar usando BaseController
+        // Según BD: teamId y name son requeridos. number es opcional.
+        $this->validate($cleanData, [
+            'teamId' => 'required|integer',
+            'name'   => 'required',
+            'number' => 'integer'
         ]);
+
+        // 3. Convertir a mayúsculas (soportando acentos y caracteres latinos)
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
+
+        try {
+            // 4. Guardar en Base de Datos
+            $newId = $this->repo->createPlayer(
+                (int)$cleanData['teamId'],
+                $upperName,
+                $number
+            );
+
+            // 5. Respuesta de Éxito
+            Response::success('Jugador agregado exitosamente', ['newId' => $newId], Response::HTTP_CREATED);
+
+        } catch (Exception $e) {
+            Logger::write("Error en addPlayer: " . $e->getMessage());
+            Response::error('No se pudo guardar el jugador debido a un error interno.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
     
     public function update($data) {
-        if (empty($data['id']) || empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'ID and Name required'], 400);
+        $cleanData = $this->sanitize($data);
+
+        $this->validate($cleanData, [
+            'id'     => 'required|integer',
+            'teamId' => 'required|integer',
+            'name'   => 'required',
+            'number' => 'integer'
+        ]);
+
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
+
+        try {
+            $this->repo->update(
+                (int)$cleanData['id'],
+                (int)$cleanData['teamId'],
+                $upperName,
+                $number
+            );
+
+            Response::success('Jugador actualizado correctamente');
+
+        } catch (Exception $e) {
+            Logger::write("Error en update Player: " . $e->getMessage());
+            Response::error('No se pudo actualizar el jugador.', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $this->repo->update(
-            (int)$data['id'],
-            (int)($data['teamId'] ?? 0), // Si no envía teamId, se podría mantener el anterior, pero aquí pedimos uno nuevo o 0
-            $data['name'],
-            (int)($data['number'] ?? 0)
-        );
-
-        Response::json(['status' => 'success', 'message' => 'Jugador actualizado']);
     }
     
     public function delete($id) {
-        if (!$id) Response::json(['status' => 'error', 'message' => 'ID requerido'], 400);
-        $this->repo->delete($id);
-        Response::json(['status' => 'success', 'message' => 'Jugador eliminado']);
-}
+        // Envolvemos el ID en un array para poder validarlo con nuestro BaseController
+        $this->validate(['id' => $id], [
+            'id' => 'required|integer'
+        ]);
+
+        try {
+            $this->repo->delete((int)$id);
+            Response::success('Jugador eliminado correctamente');
+        } catch (Exception $e) {
+            Logger::write("Error en delete Player: " . $e->getMessage());
+            Response::error('No se pudo eliminar el jugador.', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 ?>

@@ -1,5 +1,5 @@
 <?php
-class TournamentController {
+class TournamentController extends BaseController {
     private $repo;
 
     public function __construct() {
@@ -7,124 +7,144 @@ class TournamentController {
     }
 
     public function getOne($id) {
-        if (!$id) {
-            Response::json(['status' => 'error', 'message' => 'Tournament ID required'], 400);
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
+        
+        try {
+            $data = $this->repo->getTournamentData((int)$id);
+            if (!$data) {
+                Response::error('Torneo no encontrado', Response::HTTP_NOT_FOUND);
+            }
+            Response::success('Torneo recuperado', $data);
+        } catch (Exception $e) {
+            Response::error('Error interno del servidor', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        $data = $this->repo->getTournamentData((int)$id);
-        Response::json(['status' => 'success', 'data' => $data]);
     }
 
     public function create($data) {
-        if (empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'Tournament name is required'], 400);
-        }
-
-        $newId = $this->repo->createTournament(
-            $data['name'],
-            $data['category'] ?? 'Libre'
-        );
-
-        Response::json([
-            'status' => 'success', 
-            'message' => 'Tournament created', 
-            'newId' => $newId
+        $cleanData = $this->sanitize($data);
+        $this->validate($cleanData, [
+            'name' => 'required'
         ]);
+
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $upperCategory = !empty($cleanData['category']) ? mb_strtoupper($cleanData['category'], 'UTF-8') : 'LIBRE';
+
+        try {
+            $newId = $this->repo->createTournament($upperName, $upperCategory);
+            Response::success('Torneo creado exitosamente', ['newId' => $newId], Response::HTTP_CREATED);
+        } catch (Exception $e) {
+            Logger::write("Error en create Tournament: " . $e->getMessage());
+            Response::error('No se pudo crear el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
     
     public function update($data) {
-        if (empty($data['id']) || empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'ID and Name required'], 400);
+        $cleanData = $this->sanitize($data);
+        $this->validate($cleanData, [
+            'id'   => 'required|integer',
+            'name' => 'required'
+        ]);
+
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $upperCategory = !empty($cleanData['category']) ? mb_strtoupper($cleanData['category'], 'UTF-8') : 'LIBRE';
+
+        try {
+            $this->repo->update((int)$cleanData['id'], $upperName, $upperCategory);
+            Response::success('Torneo actualizado correctamente');
+        } catch (Exception $e) {
+            Logger::write("Error en update Tournament: " . $e->getMessage());
+            Response::error('No se pudo actualizar el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $this->repo->update(
-            (int)$data['id'],
-            $data['name'],
-            $data['category'] ?? 'Libre'
-        );
-
-        Response::json(['status' => 'success', 'message' => 'Torneo actualizado']);
     }
     
     public function delete($id) {
-        if (!$id) Response::json(['status' => 'error', 'message' => 'ID required'], 400);
-        $this->repo->delete($id);
-        Response::json(['status' => 'success', 'message' => 'Torneo eliminado']);
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
+        
+        try {
+            $this->repo->delete((int)$id);
+            Response::success('Torneo eliminado correctamente');
+        } catch (Exception $e) {
+            Logger::write("Error en delete Tournament: " . $e->getMessage());
+            Response::error('No se pudo eliminar el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
     
     public function getFixture($id) {
-            if (!$id) Response::json(['status' => 'error', 'message' => 'ID required'], 400);
-            $data = $this->repo->getFixtureData((int)$id);
-            Response::json(['status' => 'success', 'data' => $data]);
-        }
-
-    public function generateFixture($input) {
-            try {
-                 Logger::write("Controller: generateFixture input:", $input);
-    
-                // 1. Extracción robusta del ID
-                $tId = null;
-                if (isset($input['tournament_id'])) {
-                    $tId = $input['tournament_id'];
-                } elseif (isset($_GET['tournament_id'])) {
-                    // Fallback por si acaso se manda por URL
-                    $tId = $_GET['tournament_id'];
-                }
-    
-                // Convertir a entero para validación
-                $tIdInt = intval($tId);
-    
-                if ($tIdInt <= 0) {
-                    throw new Exception("ID de torneo inválido o faltante (Recibido: " . var_export($tId, true) . ")");
-                }
-    
-                // 2. Validar configuración
-                $configRaw = $input['config'] ?? [];
-                if (!is_array($configRaw)) {
-                    // Si viene como JSON string (a veces pasa con ciertos clientes HTTP)
-                    $configRaw = json_decode($configRaw, true) ?? [];
-                }
-    
-                $config = [
-                    'matchups_per_pair' => $configRaw['vueltas'] ?? 1,
-                    'points_win'        => $configRaw['pts_victoria'] ?? 2,
-                    'points_draw'       => $configRaw['pts_empate'] ?? 1,
-                    'points_loss'       => $configRaw['pts_derrota'] ?? 1,
-                    'points_forfeit_win'=> 2,
-                    'points_forfeit_loss'=> 0
-                ];
-    
-                // 3. Ejecutar
-                $generator = new FixtureGenerator();
-                $result = $generator->generate($tIdInt, $config);
-    
-                Response::json($result);
-    
-            } catch (Exception $e) {
-                Logger::write("Error generateFixture: " . $e->getMessage());
-                Response::json(['status' => 'error', 'message' => $e->getMessage()], 500);
-            }
-        }
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
         
-        public function updateFixtureMatch($input) {
         try {
-            if (empty($input['match_id'])) throw new Exception("Falta match_id");
-
-            $matchId = (int)$input['match_id'];
-            $venueId = !empty($input['venue_id']) ? (int)$input['venue_id'] : null;
-            $status = $input['status'] ?? 'SCHEDULED';
-            
-            $datetime = null;
-            if (!empty($input['date']) && !empty($input['time'])) {
-                $datetime = $input['date'] . ' ' . $input['time'] . ':00';
-            }
-
-            $this->repo->updateFixtureMatch($matchId, $datetime, $venueId, $status);
-            Response::json(['status' => 'success', 'message' => 'Partido actualizado']);
-
+            $data = $this->repo->getFixtureData((int)$id);
+            Response::success('Fixture recuperado', $data);
         } catch (Exception $e) {
-            Response::json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
+    public function generateFixture($input) {
+        try {
+            Logger::write("Controller: generateFixture request recibida.");
+
+            // 1. Extracción y validación del ID
+            $tId = $input['tournament_id'] ?? $_GET['tournament_id'] ?? null;
+            $this->validate(['tournament_id' => $tId], ['tournament_id' => 'required|integer']);
+            $tIdInt = (int)$tId;
+
+            // 2. Procesar configuración (soportando strings JSON)
+            $configRaw = $input['config'] ?? [];
+            if (is_string($configRaw)) {
+                $configRaw = json_decode($configRaw, true) ?? [];
+            }
+
+            $config = [
+                'matchups_per_pair'   => (int)($configRaw['vueltas'] ?? 1),
+                'points_win'          => (int)($configRaw['pts_victoria'] ?? 2),
+                'points_draw'         => (int)($configRaw['pts_empate'] ?? 1),
+                'points_loss'         => (int)($configRaw['pts_derrota'] ?? 1),
+                'points_forfeit_win'  => 2,
+                'points_forfeit_loss' => 0
+            ];
+
+            // 3. Ejecutar servicio externo (No se sanitiza este proceso porque es interno)
+            $generator = new FixtureGenerator();
+            $result = $generator->generate($tIdInt, $config);
+
+            // Devolvemos el array tal cual lo genera el FixtureGenerator para no romper compatibilidad
+            Response::json($result);
+
+        } catch (Exception $e) {
+            Logger::write("Error generateFixture: " . $e->getMessage());
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    public function updateFixtureMatch($input) {
+        $cleanData = $this->sanitize($input);
+
+        // Aprovechamos la nueva regla 'in:' del BaseController para el status
+        $this->validate($cleanData, [
+            'match_id' => 'required|integer',
+            'venue_id' => 'integer',
+            'status'   => 'in:SCHEDULED,PLAYING,FINISHED,CANCELLED'
+        ]);
+
+        try {
+            $matchId = (int)$cleanData['match_id'];
+            $venueId = !empty($cleanData['venue_id']) ? (int)$cleanData['venue_id'] : null;
+            $status  = $cleanData['status'] ?? 'SCHEDULED';
+            
+            $datetime = null;
+            if (!empty($cleanData['date']) && !empty($cleanData['time'])) {
+                // Validación básica de formato fecha-hora
+                $datetime = $cleanData['date'] . ' ' . $cleanData['time'] . ':00';
+            }
+
+            $this->repo->updateFixtureMatch($matchId, $datetime, $venueId, $status);
+            Response::success('Partido actualizado correctamente');
+
+        } catch (Exception $e) {
+            Logger::write("Error updateFixtureMatch: " . $e->getMessage());
+            Response::error('No se pudo actualizar el partido', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 ?>

@@ -1,6 +1,4 @@
 <?php
-// src/MatchRepository.php
-
 class MatchRepository {
     private $db;
 
@@ -9,20 +7,23 @@ class MatchRepository {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     }
 
-    public function syncMatch(array $data) {
-        Logger::write("Entrando a SyncMatch MatchRepository");
-        $logFile = __DIR__ . '/debug_payload_full.txt';
+    public function syncMatch(array $data): array {
+        Logger::write("MatchRepository: Iniciando SyncMatch ID: " . $data['match_id']);
         
-        $currentTime = Database::now();
-        Logger::write("Current time es $currentTime");
-        try {
-            if (!$this->db) {
-                throw new Exception("La conexión a la base de datos es NULL.");
-            }
+        $currentTime = method_exists('Database', 'now') ? Database::now() : date('Y-m-d H:i:s');
+        
+        if (!$this->db) {
+            throw new Exception("La conexión a la base de datos es nula.");
+        }
 
+        try {
             $this->db->begin_transaction();
+
+            // 1. Guardar el ID tal cual llega de Flutter (sea positivo o negativo)
+            $id = (string)$data['match_id'];
+
             // ---------------------------------------------------------
-            // 1. Insertar/Actualizar Partido (Tabla matches)
+            // Insertar/Actualizar Partido (Cabecera)
             // ---------------------------------------------------------
             $sqlMatch = "INSERT INTO matches 
                 (id, tournament_id, venue_id, team_a_id, team_b_id, team_a_name, team_b_name, 
@@ -42,14 +43,12 @@ class MatchRepository {
                 scorekeeper = VALUES(scorekeeper),
                 signature_data = VALUES(signature_data), 
                 updated_at = VALUES(updated_at),
-                pdf_url = VALUES(pdf_url)"; 
+                pdf_url = COALESCE(VALUES(pdf_url), pdf_url)";
 
             $stmt = $this->db->prepare($sqlMatch);
             
-            // Variables partido
-            $id = $data['match_id'];
-            $tourn = $data['tournament_id'] ?? null;
-            $venue = $data['venue_id'] ?? null;
+            $tourn = !empty($data['tournament_id']) ? (int)$data['tournament_id'] : null;
+            $venue = !empty($data['venue_id']) ? (int)$data['venue_id'] : null;
             $ta_id = (int)$data['team_a_id'];
             $tb_id = (int)$data['team_b_id'];
             $ta_name = $data['team_a_name'] ?? '';
@@ -65,76 +64,44 @@ class MatchRepository {
             $sig = !empty($data['signature_base64']) ? $data['signature_base64'] : null;
             $pdfUrl = $data['pdf_url'] ?? null;
             
-            Logger::write("MatchRepository: Iniciando Sincronización para Match ID: $id");
-            
-            // Tipos: s i i i i s s i i i s s s s s s s s
-            $types = "siiiissiiissssssss"; 
-            
-            $stmt->bind_param($types, 
+            // Tipos: s i i i i s s i i i s s s s s s s s (Total 18)
+            $stmt->bind_param("siiiissiiissssssss", 
                 $id, $tourn, $venue, $ta_id, $tb_id, 
-                $ta_name, $tb_name, 
-                $sa, $sb, $period, $time, $date,
+                $ta_name, $tb_name, $sa, $sb, $period, $time, $date,
                 $ref1, $ref2, $scorek, $sig,
                 $currentTime, $pdfUrl
             );
 
             $stmt->execute();
-            
-            // --- Obtener el ID real generado (si era un juego rápido) o el ID del fixture ---
-            $realMatchId = $stmt->insert_id; 
-            if ($realMatchId == 0) {
-                $realMatchId = $id; 
-            }
             $stmt->close(); 
 
-            Logger::write("La hora actual es $currentTime");
-            Logger::write("MatchRepository: Cabecera del partido guardada/actualizada OK. Real Match ID: $realMatchId");
-
             // ---------------------------------------------------------
-            // 2. Reemplazar Eventos
+            // 2. Limpiar y Reemplazar Eventos
             // ---------------------------------------------------------
             $delStmt = $this->db->prepare("DELETE FROM score_logs WHERE match_id = ?");
-            $delStmt->bind_param("s", $realMatchId); // Usamos realMatchId
+            $delStmt->bind_param("s", $id);
             $delStmt->execute();
             $delStmt->close();
 
             if (!empty($data['events']) && is_array($data['events'])) {
-                $countEvents = count($data['events']);
-                Logger::write("MatchRepository: Procesando $countEvents eventos...");
                 $sqlEvent = "INSERT INTO score_logs 
                             (match_id, period, team_id, team_side, player_id, player_name, player_number, points_scored, score_after, created_at) 
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                
                 $stmtEvent = $this->db->prepare($sqlEvent);
                 
-                if (!$stmtEvent) {
-                    throw new Exception("Error prepare Eventos: " . $this->db->error);
-                }
-
                 foreach ($data['events'] as $event) {
-                    $per = $event['period'];
+                    $per = (int)$event['period'];
                     $side = $event['team_side']; 
-                    $realTeamId = ($side == 'A') ? $ta_id : $tb_id;
-                    
+                    $realTeamId = ($side === 'A') ? $ta_id : $tb_id;
                     $pId = !empty($event['player_id']) ? (int)$event['player_id'] : null;
-                    
-                    $pName = $event['player_name'] ?? '';
+                    $pName = isset($event['player_name']) ? mb_strtoupper($event['player_name'], 'UTF-8') : '';
                     $pNum = (int)$event['player_number'];
                     $pts = (int)$event['points_scored'];
                     $scoreAfter = (int)$event['score_after'];
 
-                    // Tipos: s i i s i s i i i s
                     $stmtEvent->bind_param("siisisiiis", 
-                        $realMatchId, // Usamos realMatchId
-                        $per, 
-                        $realTeamId, 
-                        $side, 
-                        $pId, 
-                        $pName, 
-                        $pNum, 
-                        $pts, 
-                        $scoreAfter,
-                        $currentTime
+                        $id, $per, $realTeamId, $side, 
+                        $pId, $pName, $pNum, $pts, $scoreAfter, $currentTime
                     );
                     $stmtEvent->execute();
                 }
@@ -142,29 +109,28 @@ class MatchRepository {
             }
 
             // ---------------------------------------------------------
-            // 3. ACTUALIZAR ESTADO DEL FIXTURE Y VINCULAR MATCH_ID
+            // 3. Vincular Fixture si aplica
             // ---------------------------------------------------------
-            // Solo actualizamos la tabla fixtures si el ID es numérico (venía de un fixture)
-            if (is_numeric($id)) {
-                Logger::write("MatchRepository: Vinculando Fixture ID $id con Match ID $realMatchId");
+            $fixtureId = $data['fixture_id'] ?? null;
+            Logger::write("MatchRepository: Fixture ID: $fixtureId");
+            if (!empty($fixtureId)) {
                 $fixStmt = $this->db->prepare("UPDATE fixtures SET status = 'FINISHED', venue_id = ?, match_id = ? WHERE id = ?");
-                $fixStmt->bind_param("iii", $venue, $realMatchId, $id);
+                $fixStmt->bind_param("isi", $venue, $id, $fixtureId);
                 $fixStmt->execute();
                 $fixStmt->close();
             }
 
             $this->db->commit();
-            Logger::write("MatchRepository: Transacción COMPLETADA con éxito.");
+            Logger::write("MatchRepository: Sincronización exitosa. Real Match ID: $id");
 
-            // Devolvemos el ID real para que Flutter lo actualice si fue un juego rápido
-            return ['status' => 'success', 'message' => 'Sincronizado', 'real_match_id' => $realMatchId];
+            return ['real_match_id' => $id];
 
         } catch (\Throwable $e) {
-            if ($this->db) { try { $this->db->rollback(); } catch (\Throwable $t) {} }
-            
-            Logger::write("MatchRepository ERROR FATAL: " . $e->getMessage());
-            Logger::write("En archivo: " . $e->getFile() . " Línea: " . $e->getLine());
-            throw $e;
+            if ($this->db) { 
+                try { $this->db->rollback(); } catch (\Throwable $t) {} 
+            }
+            Logger::write("MatchRepository ERROR FATAL: " . $e->getMessage() . " | Línea: " . $e->getLine());
+            throw new Exception("Fallo en la sincronización de la base de datos.");
         }
     }
 }

@@ -1,26 +1,47 @@
 <?php
 /**
  * Clase Response
- * Responsabilidad: Estandarizar las respuestas JSON y códigos HTTP.
+ * Responsabilidad: Estandarizar la salida JSON y códigos HTTP.
  */
 class Response {
-    /**
-     * Envía una respuesta JSON y termina la ejecución del script.
-     * * @param array $data Los datos a enviar (array asociativo).
-     * @param int $code Código HTTP (200 OK, 400 Error, 500 Server Error).
-     */
-    public static function json(array $data, int $code = 200): void {
-        // Limpiamos cualquier salida previa (warnings de PHP, etc.)
-        ob_clean(); 
+    const HTTP_OK = 200;
+    const HTTP_CREATED = 201;
+    const HTTP_BAD_REQUEST = 400;
+    const HTTP_UNAUTHORIZED = 401;
+    const HTTP_NOT_FOUND = 404;
+    const HTTP_INTERNAL_SERVER_ERROR = 500;
+
+    public static function json(array $data, int $code = self::HTTP_OK): void {
+        if (ob_get_length()) ob_clean(); 
         
-        // Establecemos el código HTTP correcto
+        header('Content-Type: application/json; charset=UTF-8');
         http_response_code($code);
         
-        // Enviamos el JSON
-        echo json_encode($data);
-        
-        // Matamos el proceso para que no se imprima nada más
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
         exit();
+    }
+
+    public static function success(string $message = 'Operación exitosa', array $data = [], int $code = self::HTTP_OK): void {
+        $response = [
+            'status'  => 'success',
+            'message' => $message,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        if (!empty($data)) {
+            $response['data'] = $data;
+        }
+        self::json($response, $code);
+    }
+
+    public static function error(string $message = 'Ha ocurrido un error', int $code = self::HTTP_BAD_REQUEST, array $errors = []): void {
+        $response = [
+            'status'  => 'error',
+            'message' => $message
+        ];
+        if (!empty($errors)) {
+            $response['errors'] = $errors;
+        }
+        self::json($response, $code);
     }
 }
 ?>

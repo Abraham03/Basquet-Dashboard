@@ -1,5 +1,4 @@
 <?php
-
 class TournamentRepository {
     private mysqli $db;
 
@@ -7,42 +6,49 @@ class TournamentRepository {
         $this->db = $db->getConnection();
     }
     
-    public function getTournamentData($id) {
+    public function getTournamentData(int $id): ?array {
         $stmt = $this->db->prepare("SELECT * FROM tournaments WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("i", $id);
         $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result ?: null;
     }
     
-    public function createTournament($name, $category) {
-        Logger::write("TournamentRepository: Creando nuevo torneo");
-        $stmt = $this->db->prepare("INSERT INTO tournaments (name, category) VALUES (?, ?)");
+    public function createTournament(string $name, string $category): int {
+        Logger::write("TournamentRepository: Creando nuevo torneo $name");
         
-        // Cambiamos el return para obtener el ID insertado
-        if ($stmt->execute([$name, $category])) {
-            return $this->db->insert_id; // <--- DEVOLVER EL ID REAL
-        }
-        return 0;
+        $stmt = $this->db->prepare("INSERT INTO tournaments (name, category) VALUES (?, ?)");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
+        // BUG SOLUCIONADO: Se cambió execute([array]) por bind_param()
+        $stmt->bind_param("ss", $name, $category);
+        $stmt->execute();
+        
+        return $this->db->insert_id;
     }
     
-    public function update($id, $name, $category) {
+    public function update(int $id, string $name, string $category): bool {
         $stmt = $this->db->prepare("UPDATE tournaments SET name = ?, category = ? WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("ssi", $name, $category, $id);
         return $stmt->execute();
     }
     
-    public function delete($id) {
+    public function delete(int $id): bool {
         $stmt = $this->db->prepare("DELETE FROM tournaments WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
 
-    public function getFixtureData($tournamentId) {
-        // 1. Obtener nombre torneo
+    public function getFixtureData(int $tournamentId): array {
         $tObj = $this->getTournamentData($tournamentId);
         $tName = $tObj['name'] ?? 'Torneo';
     
-        // 2. Obtener partidos (Agregamos COLLATE para evitar el error Illegal mix of collations)
         $sql = "SELECT f.*, 
                 r.name as round_name, 
                 ta.name as team_a, ta.logo_url as logo_a,
@@ -70,7 +76,6 @@ class TournamentRepository {
         
         $rounds = [];
         while($row = $res->fetch_assoc()) {
-            // Forzamos el status de matches si existe y está FINISHED
             if (!empty($row['match_status'])) {
                 $row['status'] = $row['match_status'];
             }
@@ -80,16 +85,17 @@ class TournamentRepository {
         return ['tournament_name' => $tName, 'rounds' => $rounds];
     }
         
-    public function updateFixtureMatch($matchId, $datetime, $venueId, $status) {
+    public function updateFixtureMatch(int $matchId, ?string $datetime, ?int $venueId, string $status): void {
         $stmt = $this->db->prepare("UPDATE fixtures SET scheduled_datetime = ?, venue_id = ?, status = ? WHERE id = ?");
-        // 'sisi' -> string, integer (o null), string, integer
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
+        // Uso de variables referenciadas seguras incluso con NULL
         $stmt->bind_param("sisi", $datetime, $venueId, $status, $matchId);
         $stmt->execute();
-        $stmt->close();
     }
 
-    public function saveRules($tournamentId, $rules) {
-        Logger::write("TournamentRepository: Guardando reglas");
+    public function saveRules(int $tournamentId, array $rules): void {
+        Logger::write("TournamentRepository: Guardando reglas para torneo $tournamentId");
         $stmt = $this->db->prepare("INSERT INTO tournament_rules 
             (tournament_id, matchups_per_pair, points_win, points_draw, points_loss, points_forfeit_win, points_forfeit_loss)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -98,6 +104,8 @@ class TournamentRepository {
             points_win = VALUES(points_win),
             points_draw = VALUES(points_draw),
             points_loss = VALUES(points_loss)");
+            
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
         
         $stmt->bind_param("iiiiiii", 
             $tournamentId, 
@@ -109,42 +117,45 @@ class TournamentRepository {
             $rules['points_forfeit_loss']
         );
         $stmt->execute();
-        $stmt->close();
     }
 
-    // 2. Crear Jornada (Round)
-    public function createRound($tournamentId, $name, $order, $date = null) {
+    public function createRound(int $tournamentId, string $name, int $order, ?string $date = null): int {
         $stmt = $this->db->prepare("INSERT INTO tournament_rounds (tournament_id, name, round_order, start_date_estimated) VALUES (?, ?, ?, ?)");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("isis", $tournamentId, $name, $order, $date);
         $stmt->execute();
-        $roundId = $stmt->insert_id;
-        $stmt->close();
-        return $roundId;
+        return $stmt->insert_id;
     }
 
-    // 3. Crear Fixture (El partido planeado)
-    public function createFixture($tournamentId, $roundId, $teamA, $teamB) {
+    public function createFixture(int $tournamentId, int $roundId, int $teamA, int $teamB): void {
         $stmt = $this->db->prepare("INSERT INTO fixtures (tournament_id, round_id, team_a_id, team_b_id, status) VALUES (?, ?, ?, ?, 'SCHEDULED')");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("iiii", $tournamentId, $roundId, $teamA, $teamB);
         $stmt->execute();
-        $stmt->close();
     }
 
-    // 4. Limpiar fixture previo (por si se regenera)
-    public function clearFixture($tournamentId) {
-        // Al borrar el torneo se borra en cascada, pero si regeneramos, limpiamos manual
-        $this->db->query("DELETE FROM tournament_rounds WHERE tournament_id = $tournamentId"); 
+    public function clearFixture(int $tournamentId): void {
+        // VULNERABILIDAD SOLUCIONADA: Se cambió interpolación directa por statement preparado
+        $stmt = $this->db->prepare("DELETE FROM tournament_rounds WHERE tournament_id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
+        $stmt->bind_param("i", $tournamentId);
+        $stmt->execute();
     }
     
-    // 5. Obtener IDs de equipos del torneo
-    public function getTeamIds($tournamentId) {
+    public function getTeamIds(int $tournamentId): array {
         $stmt = $this->db->prepare("SELECT team_id FROM tournament_teams WHERE tournament_id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
         $stmt->bind_param("i", $tournamentId);
         $stmt->execute();
         $result = $stmt->get_result();
+        
         $ids = [];
         while ($row = $result->fetch_assoc()) {
-            $ids[] = $row['team_id'];
+            $ids[] = (int)$row['team_id'];
         }
         return $ids;
     }

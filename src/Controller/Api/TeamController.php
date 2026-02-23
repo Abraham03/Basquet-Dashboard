@@ -1,103 +1,128 @@
 <?php
-class TeamController {
+class TeamController extends BaseController
+{
     private $repo;
 
-    public function __construct() {
-        // Instancia el repositorio automáticamente
+    public function __construct()
+    {
         $this->repo = new TeamRepository(Database::getInstance());
     }
-    
-    // --- HELPER PARA SUBIR IMAGEN ---
-    private function handleFileUpload() {
-        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/../../../assets/team_logo/'; 
-            
-            // Crear carpeta si no existe
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
 
-            $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-            $filename = uniqid('team_') . '.' . $ext; // Nombre único
-            $targetPath = $uploadDir . $filename;
+    public function create($data)
+    {
+        $cleanData = $this->sanitize($data);
 
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetPath)) {
-                return '../assets/team_logo/' . $filename; // Retornamos la ruta relativa para la BD
-            }
-        }
-        return null;
-    }
-
-    public function create($data) {
-        // 1. Validación básica
-        if (empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'Team name is required'], 400);
-        }
-        // Procesar imagen
-        $logoUrl = $this->handleFileUpload();
-
-        // 2. Crear el equipo (Lógica original)
-        $newId = $this->repo->createTeam(
-            $data['name'],
-            $data['shortName'] ?? '',
-            $data['coachName'] ?? '',
-            $logoUrl
-        );
-
-        // 3. ¡IMPORTANTE! Vincular al torneo si viene el ID (Esto faltaba)
-        if (!empty($data['tournament_id'])) {
-            $this->repo->attachTeamToTournament((int)$newId, (int)$data['tournament_id']);
-        }
-
-        // 4. Respuesta con "newId" como espera Flutter
-        Response::json([
-            'status' => 'success', 
-            'message' => 'Team created successfully', 
-            'newId' => $newId
+        // Validación estricta
+        $this->validate($cleanData, [
+            'name' => 'required',
+            'tournament_id' => 'integer' // Opcional, pero si viene debe ser entero
         ]);
-    }
-    
-    public function update($data) {
-        if (empty($data['id']) || empty($data['name'])) {
-            Response::json(['status' => 'error', 'message' => 'ID and Name required'], 400);
+
+        // Convertir a mayúsculas
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $upperShortName = isset($cleanData['shortName']) ? mb_strtoupper($cleanData['shortName'], 'UTF-8') : '';
+
+        try {
+            // Usar nuestra nueva clase FileUploader
+            $logoUrl = null;
+            if (isset($_FILES['logo'])) {
+                $dir = __DIR__ . '/../../../assets/team_logo/';
+                $filename = FileUploader::uploadImage($_FILES['logo'], $dir, 'team_');
+                if ($filename) {
+                    $logoUrl = '../assets/team_logo/' . $filename;
+                }
+            }
+
+            $newId = $this->repo->createTeam(
+                $upperName,
+                $upperShortName,
+                $cleanData['coachName'] ?? '',
+                $logoUrl
+            );
+
+            // Vincular al torneo si viene el ID
+            if (!empty($cleanData['tournament_id'])) {
+                $this->repo->attachTeamToTournament((int) $newId, (int) $cleanData['tournament_id']);
+            }
+
+            Response::success('Equipo creado con éxito', ['newId' => $newId], Response::HTTP_CREATED);
+
+        } catch (Exception $e) {
+            Logger::write("Error en create Team: " . $e->getMessage());
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        
-        // Procesar imagen (si se subió una nueva)
-        $logoUrl = $this->handleFileUpload();
-
-        // 1. Actualizar datos básicos
-        $this->repo->update(
-            (int)$data['id'],
-            $data['name'],
-            $data['shortName'] ?? '',
-            $data['coachName'] ?? '',
-            $logoUrl
-        );
-
-        // 2. Actualizar Torneo (Si viene en el JSON)
-        if (!empty($data['tournament_id'])) {
-            $this->repo->updateTeamTournament((int)$data['id'], (int)$data['tournament_id']);
-        }
-
-        Response::json(['status' => 'success', 'message' => 'Equipo actualizado']);
     }
-    
-    public function detach($data) {
-        // Validamos que vengan el ID del equipo Y el ID del torneo
-        if (empty($data['id']) || empty($data['tournament_id'])) {
-            Response::json(['status' => 'error', 'message' => 'Se requiere ID del Equipo y ID del Torneo'], 400);
+
+    public function update($data)
+    {
+        $cleanData = $this->sanitize($data);
+
+        $this->validate($cleanData, [
+            'id' => 'required|integer',
+            'name' => 'required'
+        ]);
+
+        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
+        $upperShortName = isset($cleanData['shortName']) ? mb_strtoupper($cleanData['shortName'], 'UTF-8') : '';
+
+        try {
+            // Intentar subir nueva imagen
+            $logoUrl = null;
+            if (isset($_FILES['logo'])) {
+                $dir = __DIR__ . '/../../../assets/team_logo/';
+                $filename = FileUploader::uploadImage($_FILES['logo'], $dir, 'team_');
+                if ($filename) {
+                    $logoUrl = '../assets/team_logo/' . $filename;
+                }
+            }
+
+            // Actualizar datos básicos (El repo ahora es inteligente y no borra el logo viejo si $logoUrl es null)
+            $this->repo->update(
+                (int) $cleanData['id'],
+                $upperName,
+                $upperShortName,
+                $cleanData['coachName'] ?? '',
+                $logoUrl
+            );
+
+            // Actualizar Torneo si aplica
+            if (!empty($cleanData['tournament_id'])) {
+                $this->repo->updateTeamTournament((int) $cleanData['id'], (int) $cleanData['tournament_id']);
+            }
+
+            Response::success('Equipo actualizado correctamente');
+
+        } catch (Exception $e) {
+            Logger::write("Error en update Team: " . $e->getMessage());
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $this->repo->detachTeamFromTournament((int)$data['id'], (int)$data['tournament_id']);
-        
-        Response::json(['status' => 'success', 'message' => 'Equipo retirado del torneo']);
     }
-    
-    public function delete($id) {
-        if (!$id) Response::json(['status' => 'error', 'message' => 'ID required'], 400);
-        $this->repo->delete($id);
-        Response::json(['status' => 'success', 'message' => 'Equipo eliminado']);
-}
 
+    public function detach($data)
+    {
+        $this->validate($data, [
+            'id' => 'required|integer',
+            'tournament_id' => 'required|integer'
+        ]);
+
+        try {
+            $this->repo->detachTeamFromTournament((int) $data['id'], (int) $data['tournament_id']);
+            Response::success('Equipo retirado del torneo');
+        } catch (Exception $e) {
+            Response::error('Error al retirar el equipo', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function delete($id)
+    {
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
+
+        try {
+            $this->repo->delete((int) $id);
+            Response::success('Equipo eliminado');
+        } catch (Exception $e) {
+            Response::error('Error al eliminar el equipo', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 ?>
