@@ -84,12 +84,20 @@ class TournamentController extends BaseController {
         try {
             Logger::write("Controller: generateFixture request recibida.");
 
-            // 1. Extracción y validación del ID
             $tId = $input['tournament_id'] ?? $_GET['tournament_id'] ?? null;
             $this->validate(['tournament_id' => $tId], ['tournament_id' => 'required|integer']);
             $tIdInt = (int)$tId;
 
-            // 2. Procesar configuración (soportando strings JSON)
+            // --- NUEVA VALIDACIÓN DE NEGOCIO ---
+            if ($this->repo->hasPlayedMatches($tIdInt)) {
+                // Si ya empezó, enviamos error 400 y detenemos la ejecución
+                Response::error(
+                    'No se puede regenerar el fixture porque ya existen partidos en juego o finalizados. Debes cancelar los partidos primero.', 
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+            // -----------------------------------
+
             $configRaw = $input['config'] ?? [];
             if (is_string($configRaw)) {
                 $configRaw = json_decode($configRaw, true) ?? [];
@@ -98,17 +106,17 @@ class TournamentController extends BaseController {
             $config = [
                 'matchups_per_pair'   => (int)($configRaw['vueltas'] ?? 1),
                 'points_win'          => (int)($configRaw['pts_victoria'] ?? 2),
-                'points_draw'         => (int)($configRaw['pts_empate'] ?? 1),
+                'points_draw'         => (int)($configRaw['pts_empate'] ?? 0),
                 'points_loss'         => (int)($configRaw['pts_derrota'] ?? 1),
                 'points_forfeit_win'  => 2,
                 'points_forfeit_loss' => 0
             ];
 
-            // 3. Ejecutar servicio externo (No se sanitiza este proceso porque es interno)
             $generator = new FixtureGenerator();
+            // Asegúrate de que tu FixtureGenerator esté llamando a clearFixture() 
+            // antes de empezar a insertar los nuevos datos.
             $result = $generator->generate($tIdInt, $config);
 
-            // Devolvemos el array tal cual lo genera el FixtureGenerator para no romper compatibilidad
             Response::json($result);
 
         } catch (Exception $e) {

@@ -112,7 +112,6 @@ class MatchRepository {
             // 3. Vincular Fixture si aplica
             // ---------------------------------------------------------
             $fixtureId = $data['fixture_id'] ?? null;
-            Logger::write("MatchRepository: Fixture ID: $fixtureId");
             if (!empty($fixtureId)) {
                 $fixStmt = $this->db->prepare("UPDATE fixtures SET status = 'FINISHED', venue_id = ?, match_id = ? WHERE id = ?");
                 $fixStmt->bind_param("isi", $venue, $id, $fixtureId);

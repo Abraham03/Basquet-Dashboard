@@ -36,7 +36,7 @@ class FileUploader
 
         throw new Exception("Error del servidor al guardar la imagen.");
     }
-
+    
     /**
      * Sube un archivo validando su extensión.
      */

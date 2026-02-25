@@ -136,13 +136,33 @@ class TournamentRepository {
         $stmt->execute();
     }
 
-    public function clearFixture(int $tournamentId): void {
-        // VULNERABILIDAD SOLUCIONADA: Se cambió interpolación directa por statement preparado
-        $stmt = $this->db->prepare("DELETE FROM tournament_rounds WHERE tournament_id = ?");
+    // Añade este método para verificar si es seguro regenerar
+    public function hasPlayedMatches(int $tournamentId): bool {
+        // Buscamos si hay algún partido que no esté en estado 'SCHEDULED'
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM fixtures WHERE tournament_id = ? AND status != 'SCHEDULED'");
         if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
         
         $stmt->bind_param("i", $tournamentId);
         $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        // Retorna true si hay 1 o más partidos jugados/en curso
+        return $result['total'] > 0;
+    }
+
+    // Actualiza tu método clearFixture existente
+    public function clearFixture(int $tournamentId): void {
+        // 1. Primero borramos los hijos (fixtures)
+        $stmt1 = $this->db->prepare("DELETE FROM fixtures WHERE tournament_id = ?");
+        if (!$stmt1) throw new Exception("Error DB: " . $this->db->error);
+        $stmt1->bind_param("i", $tournamentId);
+        $stmt1->execute();
+
+        // 2. Luego borramos los padres (tournament_rounds)
+        $stmt2 = $this->db->prepare("DELETE FROM tournament_rounds WHERE tournament_id = ?");
+        if (!$stmt2) throw new Exception("Error DB: " . $this->db->error);
+        $stmt2->bind_param("i", $tournamentId);
+        $stmt2->execute();
     }
     
     public function getTeamIds(int $tournamentId): array {
