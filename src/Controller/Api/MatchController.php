@@ -7,11 +7,8 @@ class MatchController extends BaseController {
     }
 
     public function sync($data) {
-        // 1. Sanitizar entrada
         $cleanData = $this->sanitize($data);
 
-        // 2. Validación estricta
-        // match_id es string (si es partido rápido en Flutter, genera un UUID temporal)
         $this->validate($cleanData, [
             'match_id'  => 'required', 
             'team_a_id' => 'required|integer',
@@ -20,28 +17,39 @@ class MatchController extends BaseController {
             'score_b'   => 'required|numeric'
         ]);
 
-        // 3. Convertir a mayúsculas los campos de texto
         $cleanData['team_a_name']  = isset($cleanData['team_a_name'])  ? mb_strtoupper($cleanData['team_a_name'], 'UTF-8') : '';
         $cleanData['team_b_name']  = isset($cleanData['team_b_name'])  ? mb_strtoupper($cleanData['team_b_name'], 'UTF-8') : '';
         $cleanData['main_referee'] = isset($cleanData['main_referee']) ? mb_strtoupper($cleanData['main_referee'], 'UTF-8') : '';
         $cleanData['aux_referee']  = isset($cleanData['aux_referee'])  ? mb_strtoupper($cleanData['aux_referee'], 'UTF-8') : '';
         $cleanData['scorekeeper']  = isset($cleanData['scorekeeper'])  ? mb_strtoupper($cleanData['scorekeeper'], 'UTF-8') : '';
 
-        // Restaurar eventos y firmas (pueden haberse alterado por el sanitize)
         $cleanData['events'] = $data['events'] ?? [];
         $cleanData['signature_base64'] = $data['signature_base64'] ?? null;
 
         try {
-            // 4. Manejo del PDF usando FileUploader
             $pdfPath = null;
             if (isset($_FILES['pdf_report'])) {
-                $uploadDir = __DIR__ . '/../../../assets/match_reports/';
-                // Generar un prefijo seguro y descriptivo
+                
+                // 1. Obtener nombre del torneo para la carpeta
+                $tId = !empty($cleanData['tournament_id']) ? (int)$cleanData['tournament_id'] : 0;
+                $folderName = 'Partidos_Generales'; // Fallback
+                
+                if ($tId > 0) {
+                    $tournRepo = new TournamentRepository(Database::getInstance());
+                    $tournData = $tournRepo->getTournamentData($tId);
+                    if ($tournData && !empty($tournData['name'])) {
+                        $folderName = FileUploader::sanitizeFolderName($tournData['name']);
+                    }
+                }
+
+                // 2. Modificar la ruta inyectando la carpeta dinámica
+                $uploadDir = __DIR__ . '/../../../assets/match_reports/' . $folderName . '/';
                 $prefix = "match_{$cleanData['match_id']}_";
                 
                 $filename = FileUploader::uploadFile($_FILES['pdf_report'], $uploadDir, ['pdf'], $prefix);
                 if ($filename) {
-                    $pdfPath = "../assets/match_reports/" . $filename;
+                    // 3. Guardar la ruta relativa correcta en la BD
+                    $pdfPath = "../assets/match_reports/" . $folderName . "/" . $filename;
                 }
             }
 
@@ -49,10 +57,7 @@ class MatchController extends BaseController {
                 $cleanData['pdf_url'] = $pdfPath;
             }
 
-            // 5. Enviar a Repositorio
             $result = $this->repo->syncMatch($cleanData);
-
-            // 6. Retornar éxito
             Response::success('Partido sincronizado correctamente', ['real_match_id' => $result['real_match_id']]);
 
         } catch (Exception $e) {

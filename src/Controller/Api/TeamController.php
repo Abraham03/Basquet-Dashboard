@@ -66,7 +66,6 @@ class TeamController extends BaseController
         $upperShortName = isset($cleanData['shortName']) ? mb_strtoupper($cleanData['shortName'], 'UTF-8') : '';
 
         try {
-            // Intentar subir nueva imagen
             $logoUrl = null;
             if (isset($_FILES['logo'])) {
                 $dir = __DIR__ . '/../../../assets/team_logo/';
@@ -76,7 +75,7 @@ class TeamController extends BaseController
                 }
             }
 
-            // Actualizar datos básicos (El repo ahora es inteligente y no borra el logo viejo si $logoUrl es null)
+            // Actualizar datos básicos
             $this->repo->update(
                 (int) $cleanData['id'],
                 $upperName,
@@ -85,8 +84,10 @@ class TeamController extends BaseController
                 $logoUrl
             );
 
-            // Actualizar Torneo si aplica
-            if (!empty($cleanData['tournament_id'])) {
+            // AQUÍ LA LÓGICA SOLICITADA:
+            // Si viene con un ID de torneo válido (> 0), vinculamos el equipo a ese torneo.
+            // Si viene con 0, lo ignora y solo actualiza la información general del equipo.
+            if (isset($cleanData['tournament_id']) && (int)$cleanData['tournament_id'] > 0) {
                 $this->repo->updateTeamTournament((int) $cleanData['id'], (int) $cleanData['tournament_id']);
             }
 
@@ -109,7 +110,7 @@ class TeamController extends BaseController
             $this->repo->detachTeamFromTournament((int) $data['id'], (int) $data['tournament_id']);
             Response::success('Equipo retirado del torneo');
         } catch (Exception $e) {
-            Response::error('Error al retirar el equipo', Response::HTTP_INTERNAL_SERVER_ERROR);
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -121,7 +122,8 @@ class TeamController extends BaseController
             $this->repo->delete((int) $id);
             Response::success('Equipo eliminado');
         } catch (Exception $e) {
-            Response::error('Error al eliminar el equipo', Response::HTTP_INTERNAL_SERVER_ERROR);
+            // AQUÍ ESTÁ EL PROBLEMA: Estás ignorando $e->getMessage()
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

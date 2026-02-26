@@ -2,7 +2,11 @@
 session_start();
 // Si ya está logueado, mandar al dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    header("Location: dashboard.php");
+    if ($_SESSION['admin_role'] === 'coach' || $_SESSION['admin_role'] === 'captain') {
+        header("Location: coach_dashboard.php");
+    } else {
+        header("Location: dashboard.php");
+    }
     exit;
 }
 ?>
@@ -12,6 +16,8 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | Basket Pro</title>
+    
+    <link rel="icon" type="image/ico" href="../assets/imagenes/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -148,8 +154,11 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
             </div>
         </form>
 
-        <div class="text-center mt-4">
-            <small class="text-muted">© 2026 TechSolutions Management</small>
+        <div class="text-center mt-4 opacity-75">
+            <small class="text-muted fw-medium">
+                &copy; <?php echo date('Y'); ?> <strong style="color: var(--primary-color);">Basket Pro</strong>.<br>
+                Desarrollado por Tech Solutions.
+            </small>
         </div>
     </div>
 
@@ -196,7 +205,12 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
                 const result = await response.json();
 
                 if (result.status === 'success') {
-                    window.location.href = 'dashboard.php';
+                    // REDIRECCIÓN INTELIGENTE SEGÚN EL ROL
+                    if (result.role === 'coach' || result.role === 'captain') {
+                        window.location.href = 'coach_dashboard.php';
+                    } else {
+                        window.location.href = 'dashboard.php';
+                    }
                 } else {
                     throw new Error(result.message || 'Credenciales incorrectas');
                 }

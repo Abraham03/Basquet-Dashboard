@@ -69,6 +69,24 @@ class TournamentController extends BaseController {
         }
     }
     
+    // Reemplaza tu método deleteFixture por este:
+    public function deleteFixture($input) {
+        $tId = $input['id'] ?? null;
+        $this->validate(['id' => $tId], ['id' => 'required|integer']);
+        $tIdInt = (int)$tId;
+
+        try {
+            // Ya NO bloqueamos si hay partidos jugados, porque la intención del usuario es PURGAR el torneo.
+            // Ejecutamos la limpieza total (Fixtures, Matches, Score Logs y Rounds)
+            $this->repo->clearFixture($tIdInt);
+            
+            Response::success('Calendario y estadísticas purgadas correctamente');
+        } catch (Exception $e) {
+            Logger::write("Error deleteFixture: " . $e->getMessage());
+            Response::error('Error interno al purgar el calendario', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
     public function getFixture($id) {
         $this->validate(['id' => $id], ['id' => 'required|integer']);
         
@@ -108,8 +126,8 @@ class TournamentController extends BaseController {
                 'points_win'          => (int)($configRaw['pts_victoria'] ?? 2),
                 'points_draw'         => (int)($configRaw['pts_empate'] ?? 0),
                 'points_loss'         => (int)($configRaw['pts_derrota'] ?? 1),
-                'points_forfeit_win'  => 2,
-                'points_forfeit_loss' => 0
+                'points_forfeit_win'  => (int)($configRaw['pts_forfeit_win'] ?? 2),
+                'points_forfeit_loss' => (int)($configRaw['pts_forfeit_loss'] ?? 0)
             ];
 
             $generator = new FixtureGenerator();

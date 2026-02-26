@@ -152,17 +152,24 @@ class TournamentRepository {
 
     // Actualiza tu método clearFixture existente
     public function clearFixture(int $tournamentId): void {
-        // 1. Primero borramos los hijos (fixtures)
+        // 1. Primero borramos los fixtures (hijos de tournament_rounds)
         $stmt1 = $this->db->prepare("DELETE FROM fixtures WHERE tournament_id = ?");
         if (!$stmt1) throw new Exception("Error DB: " . $this->db->error);
         $stmt1->bind_param("i", $tournamentId);
         $stmt1->execute();
 
-        // 2. Luego borramos los padres (tournament_rounds)
-        $stmt2 = $this->db->prepare("DELETE FROM tournament_rounds WHERE tournament_id = ?");
+        // 2. NUEVO: Borramos los partidos jugados (matches). 
+        // ⚠️ Al hacer esto, MySQL automáticamente borra los 'score_logs' por el ON DELETE CASCADE
+        $stmt2 = $this->db->prepare("DELETE FROM matches WHERE tournament_id = ?");
         if (!$stmt2) throw new Exception("Error DB: " . $this->db->error);
         $stmt2->bind_param("i", $tournamentId);
         $stmt2->execute();
+
+        // 3. Finalmente borramos las jornadas (padres de fixtures)
+        $stmt3 = $this->db->prepare("DELETE FROM tournament_rounds WHERE tournament_id = ?");
+        if (!$stmt3) throw new Exception("Error DB: " . $this->db->error);
+        $stmt3->bind_param("i", $tournamentId);
+        $stmt3->execute();
     }
     
     public function getTeamIds(int $tournamentId): array {

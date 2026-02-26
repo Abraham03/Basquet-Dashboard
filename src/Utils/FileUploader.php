@@ -5,6 +5,22 @@
  */
 class FileUploader
 {
+    
+    /**
+     * Limpia una cadena de texto para que sea segura como nombre de carpeta.
+     */
+    public static function sanitizeFolderName(string $name): string {
+        // 1. Quitar acentos comunes
+        $unwanted_array = ['Á'=>'A', 'É'=>'E', 'Í'=>'I', 'Ó'=>'O', 'Ú'=>'U', 'Ñ'=>'N', 'á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u', 'ñ'=>'n'];
+        $name = strtr($name, $unwanted_array);
+        
+        // 2. Reemplazar cualquier cosa que no sea letra o número por guiones bajos
+        $name = preg_replace('/[^a-zA-Z0-9]+/', '_', $name);
+        
+        // 3. Quitar guiones bajos de los extremos
+        return trim($name, '_');
+    }
+    
     /**
      * Sube una imagen y retorna su ruta relativa.
      */

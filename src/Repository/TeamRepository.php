@@ -65,11 +65,25 @@ class TeamRepository {
     }
     
     public function delete(int $id): bool {
+        Logger::write("TeamRepository: Intentando eliminar equipo ID: $id");
         $stmt = $this->db->prepare("DELETE FROM teams WHERE id = ?");
-        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        
+        if (!$stmt) {
+            throw new Exception("Error DB: " . $this->db->error);
+        }
         
         $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        
+        try {
+            return $stmt->execute();
+        } catch (mysqli_sql_exception $e) {
+            // El código 1451 indica que falló la restricción de llave foránea (Tiene partidos o jugadores amarrados)
+            if ($e->getCode() == 1451) {
+                throw new Exception("No puedes eliminar este equipo permanentemente porque ya tiene partidos programados o finalizados. Para ocultarlo del torneo actual, filtra por el torneo y usa la opción 'Quitar'.");
+            }
+            // Si es otro tipo de error SQL, lo lanza genéricamente
+            throw new Exception("Error de base de datos: " . $e->getMessage());
+        }
     }
 }
 ?>

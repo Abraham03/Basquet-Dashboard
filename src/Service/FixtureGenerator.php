@@ -51,7 +51,7 @@ class FixtureGenerator {
             $roundCounter = 1;
 
             for ($lap = 0; $lap < $laps; $lap++) {
-                // En vueltas pares (0, 2...), local es A. En impares (1, 3...), local es B
+                // En vueltas pares (Ida), local es A. En impares (Vuelta), local es B
                 $swapHomeAway = ($lap % 2 != 0); 
 
                 for ($round = 0; $round < $totalRounds; $round++) {
@@ -70,7 +70,17 @@ class FixtureGenerator {
                             continue;
                         }
 
-                        // Alternar localía según la vuelta
+                        // --- MEJORA PROFESIONAL: BALANCEO DE LOCALÍA (Algoritmo de Berger) ---
+                        // Si es el partido del equipo fijo ($match === 0) y la jornada es impar, 
+                        // invertimos su localía para que no juegue siempre en casa.
+                        if ($match === 0 && $round % 2 === 1) {
+                            $temp = $home;
+                            $home = $away;
+                            $away = $temp;
+                        }
+                        // ----------------------------------------------------------------------
+
+                        // Alternar localía general si es la segunda vuelta (partidos de revancha)
                         if ($swapHomeAway) {
                             $this->repository->createFixture($tournamentId, $roundId, $away, $home);
                         } else {

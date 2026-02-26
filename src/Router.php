@@ -84,9 +84,9 @@ class Router {
                     break;
                 case 'delete_player':(new PlayerController())->delete($input['id'] ?? 0); 
                     break;    
-                    
                 case 'detach_team': (new TeamController())->detach($input); 
-                    break;    
+                    break;   
+                case 'delete_fixture': (new TournamentController())->deleteFixture($input); break;    
 
                 // Sincronizacion Flutter
                 case 'sync_match':
@@ -100,10 +100,14 @@ class Router {
                 // --- Galería Slider
                 case 'get_slider_images': (new GalleryController())->getImages(); break;
                 case 'upload_slider_image': (new GalleryController())->uploadImage(); break;
-                case 'delete_slider_image': (new GalleryController())->deleteImage($input); break;    
+                case 'delete_slider_image': (new GalleryController())->deleteImage($input); break; 
+                
+                // --- Usuarios y Accesos
+                case 'get_users': (new UserController())->getAll(); break;
+                case 'create_user': (new UserController())->create($input); break;
+                case 'update_user': (new UserController())->update($input); break;
+                case 'delete_user': (new UserController())->delete($input['id'] ?? 0); break;
                     
-               
-                    break;   
     
                 default:
                     Logger::write("Error: Acción no encontrada -> $action");

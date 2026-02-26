@@ -6,6 +6,21 @@ class PlayerController extends BaseController {
         // Instancia el repositorio automáticamente
         $this->repo = new PlayerRepository(Database::getInstance());
     }
+    
+    // Helper para procesar la foto y organizarla por carpeta de equipo
+    private function processPhotoUpload($teamId) {
+        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        // Crear una carpeta específica para el equipo (Ej: equipo_15)
+        $folderName = 'equipo_' . (int)$teamId;
+        $dir = __DIR__ . '/../../../assets/player_photos/' . $folderName . '/';
+        
+        $filename = FileUploader::uploadImage($_FILES['photo'], $dir, 'player_');
+        
+        return $filename ? ('../assets/player_photos/' . $folderName . '/' . $filename) : null;
+    }
 
     public function addPlayer($data) {
         // 1. Sanitizar la entrada para evitar XSS
@@ -24,11 +39,13 @@ class PlayerController extends BaseController {
         $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
 
         try {
+            $photoUrl = $this->processPhotoUpload($cleanData['teamId']);
             // 4. Guardar en Base de Datos
             $newId = $this->repo->createPlayer(
                 (int)$cleanData['teamId'],
                 $upperName,
-                $number
+                $number,
+                $photoUrl
             );
 
             // 5. Respuesta de Éxito
@@ -41,6 +58,18 @@ class PlayerController extends BaseController {
     }
     
     public function update($data) {
+        // Verificamos quién está haciendo la petición
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    
+    $userRole = $_SESSION['admin_role'] ?? 'guest';
+    $userTeam = $_SESSION['team_id'] ?? null;
+
+    // Si es un coach, verificamos que el teamId que intenta modificar sea el suyo
+    if ($userRole === 'coach') {
+        if ($data['teamId'] != $userTeam) {
+            Response::error("No tienes permisos para modificar jugadores de otros equipos.", 403);
+        }
+    }
         $cleanData = $this->sanitize($data);
 
         $this->validate($cleanData, [
@@ -54,11 +83,13 @@ class PlayerController extends BaseController {
         $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
 
         try {
+            $photoUrl = $this->processPhotoUpload($cleanData['teamId']);
             $this->repo->update(
                 (int)$cleanData['id'],
                 (int)$cleanData['teamId'],
                 $upperName,
-                $number
+                $number,
+                $photoUrl
             );
 
             Response::success('Jugador actualizado correctamente');

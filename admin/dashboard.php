@@ -12,9 +12,12 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basket Pro | Admin Dashboard</title>
     
+    <link rel="icon" type="image/ico" href="../assets/imagenes/favicon.ico">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet">
     
     <style>
         :root {
@@ -26,6 +29,13 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         }
         
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); overflow-x: hidden; }
+        
+        #page-content-wrapper {
+            width: 100%; padding-left: var(--sidebar-width);
+            transition: padding var(--transition-speed) ease; min-height: 100vh;
+            display: flex; 
+            flex-direction: column;
+        }
 
         /* --- Layout --- */
         #wrapper { display: flex; width: 100%; position: relative; }
@@ -35,11 +45,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             background-color: var(--sidebar-bg); z-index: 1100;
             transition: transform var(--transition-speed) ease;
             overflow-y: auto; display: flex; flex-direction: column;
-        }
-
-        #page-content-wrapper {
-            width: 100%; padding-left: var(--sidebar-width);
-            transition: padding var(--transition-speed) ease; min-height: 100vh;
         }
 
         body.toggled #sidebar-wrapper { transform: translateX(calc(-1 * var(--sidebar-width))); }
@@ -85,6 +90,33 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         /* Estilos de la Galería */
         .admin-gallery-img { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; border: 1px solid #dee2e6; }
         .img-delete-btn { position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        /* --- FOOTER MODERNO DASHBOARD --- */
+        .footer-admin {
+            margin-top: auto;
+            background-color: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 1.25rem 0;
+        }
+        .footer-dev-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
+            border: 1px solid transparent;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .footer-dev-badge:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background: #fff5f2;
+        }
     </style>
 </head>
 <body>
@@ -106,6 +138,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             </a>
             <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-players">
                 <i class="bi bi-people"></i> Jugadores
+            </a>
+            <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-users">
+                <i class="bi bi-person-badge"></i> Usuarios / Accesos
             </a>
             <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-gallery" onclick="loadGallery()">
                 <i class="bi bi-images"></i> Slider Home
@@ -156,7 +191,15 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="card overflow-hidden">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
-                                <thead><tr><th class="ps-4">ID</th><th>Nombre</th><th>Categoría</th><th class="text-end pe-4">Gestión</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Calendario Partidos</th>
+                                        <th class="text-end pe-4">Ajustes</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="tableTournaments"></tbody>
                             </table>
                         </div>
@@ -203,7 +246,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="card overflow-hidden">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
-                                <thead><tr><th class="ps-4">ID</th><th>Nombre</th><th>Dorsal</th><th>Equipo</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                                <thead><tr><th class="ps-4">ID</th><th>Nombre</th><th>Número de jugador</th><th>Equipo</th><th class="text-end pe-4">Acciones</th></tr></thead>
                                 <tbody id="tablePlayers"></tbody>
                             </table>
                         </div>
@@ -222,19 +265,114 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         </button>
                         <input type="file" id="uploadGalleryInput" accept="image/jpeg, image/png, image/webp" style="display: none;" onchange="uploadGalleryImage(this)">
                     </div>
-
-                    <div class="row g-4" id="galleryContainer">
+                    <div class="row g-4" id="galleryContainer"></div>
+                </div>
+                
+                <div class="tab-pane fade" id="tab-users">
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div>
+                            <h3 class="fw-bold mb-1">Usuarios y Accesos</h3>
+                            <p class="text-muted mb-0">Administra quién puede acceder al sistema (Coaches/Admins).</p>
                         </div>
+                        <button class="btn btn-primary rounded-pill px-4 shadow" onclick="openUserModal()">
+                            <i class="bi bi-person-plus-fill me-2"></i>Nuevo Usuario
+                        </button>
+                    </div>
+                    <div class="card overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Equipo Vinculado</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableUsers"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-container border-top" id="paginationUsers"></div>
+                    </div>
                 </div>
 
             </div>
         </div>
+
+        <footer class="footer-admin">
+            <div class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">
+                        <i class="bi bi-basket2-fill text-primary me-1"></i> Basket Pro
+                    </span>
+                    <span class="text-muted" style="font-size: 0.85rem;">&copy; <?php echo date('Y'); ?></span>
+                </div>
+
+                <div class="d-flex align-items-center gap-4">
+                    <div class="text-muted" style="font-size: 0.8rem;">Versión 1.2</div>
+                    <div style="width: 1px; height: 16px; background-color: #e2e8f0;"></div>
+                    <a href="https://techsolutions.management/" class="footer-dev-badge" target="_blank" rel="noopener">
+                        <i class="bi bi-code-slash text-primary"></i> TechSolutions
+                    </a>
+                </div>
+            </div>
+        </footer>
+
     </div>
 </div>
 
 <div class="modal fade" id="modalTournament" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form id="formTournament" class="modal-content border-0 shadow-lg"><input type="hidden" name="id" id="tourn_id"><div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="titleTournament">Nuevo Torneo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="form-floating mb-3"><input type="text" name="name" id="tourn_name" class="form-control" placeholder="Nombre" required><label>Nombre del Torneo</label></div><div class="form-floating"><input type="text" name="category" id="tourn_cat" class="form-control" placeholder="Categoría"><label>Categoría</label></div></div><div class="modal-footer border-0 pt-0 pb-4 pe-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Guardar</button></div></form></div></div>
+
 <div class="modal fade" id="modalTeam" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form id="formTeam" class="modal-content border-0 shadow-lg" enctype="multipart/form-data"><input type="hidden" name="id" id="team_id"><div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="titleTeam">Nuevo Equipo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="d-flex align-items-center mb-4 p-3 bg-light rounded-3 border"><div class="me-3"><img id="previewLogo" src="https://placehold.co/80?text=Logo" class="team-logo-table" style="width: 80px; height: 80px;"></div><div class="flex-grow-1"><label class="form-label small text-muted fw-bold mb-1">LOGO</label><input type="file" name="logo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this)"></div></div><div class="form-floating mb-3"><input type="text" name="name" id="team_name" class="form-control" placeholder="Nombre" required><label>Nombre del Equipo</label></div><div class="row g-2 mb-3"><div class="col-md-6"><div class="form-floating"><input type="text" name="shortName" id="team_short" class="form-control" placeholder="Abrev"><label>Abrev.</label></div></div><div class="col-md-6"><div class="form-floating"><input type="text" name="coachName" id="team_coach" class="form-control" placeholder="Coach"><label>Entrenador</label></div></div></div><div class="form-floating"><select name="tournament_id" id="selectTournamentForTeam" class="form-select"></select><label>Asignar Torneo</label></div></div><div class="modal-footer border-0 pt-0 pb-4 pe-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Guardar</button></div></form></div></div>
-<div class="modal fade" id="modalPlayer" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form id="formPlayer" class="modal-content border-0 shadow-lg"><input type="hidden" name="id" id="player_id"><div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="titlePlayer">Nuevo Jugador</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="row g-2 mb-3"><div class="col-9"><div class="form-floating"><input type="text" name="name" id="player_name" class="form-control" placeholder="Nombre" required><label>Nombre Completo</label></div></div><div class="col-3"><div class="form-floating"><input type="number" name="number" id="player_num" class="form-control" placeholder="#"><label>#</label></div></div></div><div class="form-floating"><select name="teamId" id="selectTeamForPlayer" class="form-select" required></select><label>Equipo</label></div></div><div class="modal-footer border-0 pt-0 pb-4 pe-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Guardar</button></div></form></div></div>
+
+<div class="modal fade" id="modalPlayer" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="formPlayer" class="modal-content border-0 shadow-lg" enctype="multipart/form-data">
+            <input type="hidden" name="id" id="player_id">
+            
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titlePlayer">Nuevo Jugador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center mb-4 p-3 bg-light rounded-3 border">
+                    <div class="me-3">
+                        <img id="previewPlayerPhoto" src="https://placehold.co/80?text=Foto" class="rounded-circle object-fit-cover shadow-sm border" style="width: 80px; height: 80px;">
+                    </div>
+                    <div class="flex-grow-1">
+                        <label class="form-label small text-muted fw-bold mb-1">FOTO DE PERFIL (Opcional)</label>
+                        <input type="file" name="photo" id="player_photo_input" class="form-control form-control-sm" accept="image/*" onchange="previewPlayerImage(this)">
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-9">
+                        <div class="form-floating">
+                            <input type="text" name="name" id="player_name" class="form-control fw-bold" placeholder="Nombre" required>
+                            <label>Nombre Completo</label>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-floating">
+                            <input type="number" name="number" id="player_num" class="form-control text-center" placeholder="#">
+                            <label>Número</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-floating">
+                    <select name="teamId" id="selectTeamForPlayer" class="form-select" required></select>
+                    <label>Equipo</label>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="modal fade" id="modalFixtureConfig" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -245,20 +383,28 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-info small mb-3"><i class="bi bi-info-circle me-1"></i> Configura las reglas para generar los enfrentamientos.</div>
+                <div class="alert alert-info small mb-4"><i class="bi bi-info-circle me-1"></i> Configura las reglas para generar los enfrentamientos.</div>
+                
                 <h6 class="fw-bold text-primary mb-3">Formato de Juego</h6>
-                <div class="form-floating mb-3">
+                <div class="form-floating mb-4">
                     <select name="vueltas" id="fix_vueltas" class="form-select">
                         <option value="1">Una Vuelta (Ida)</option>
                         <option value="2">Doble Vuelta (Ida y Vuelta)</option>
                     </select>
                     <label>Enfrentamientos</label>
                 </div>
-                <h6 class="fw-bold text-primary mb-3">Puntuación</h6>
-                <div class="row g-2">
+                
+                <h6 class="fw-bold text-primary mb-3">Puntuación Estándar</h6>
+                <div class="row g-2 mb-4">
                     <div class="col-4"><div class="form-floating"><input type="number" name="pts_victoria" id="fix_win" class="form-control" value="2" required><label>Victoria</label></div></div>
                     <div class="col-4"><div class="form-floating"><input type="number" name="pts_derrota" id="fix_loss" class="form-control" value="1" required><label>Derrota</label></div></div>
                     <div class="col-4"><div class="form-floating"><input type="number" name="pts_empate" id="fix_draw" class="form-control" value="1" required><label>Empate</label></div></div>
+                </div>
+
+                <h6 class="fw-bold text-danger mb-3">Puntos por Ausencia (Forfeit)</h6>
+                <div class="row g-2">
+                    <div class="col-6"><div class="form-floating"><input type="number" name="pts_forfeit_win" id="fix_forfeit_win" class="form-control" value="2" required><label>Victoria (Presente)</label></div></div>
+                    <div class="col-6"><div class="form-floating"><input type="number" name="pts_forfeit_loss" id="fix_forfeit_loss" class="form-control text-danger fw-bold" value="0" required><label>Derrota (Ausente)</label></div></div>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 pb-4 pe-4">
@@ -269,13 +415,60 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="js/admin-crud.js"></script>
-<script>
-    // Inicializar Tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+<div class="modal fade" id="modalUser" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="formUser" class="modal-content border-0 shadow-lg">
+            <input type="hidden" name="id" id="user_id">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleUser">Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning small mb-3"><i class="bi bi-shield-lock me-1"></i> El rol "Coach" requiere que selecciones a qué equipo pertenece.</div>
+                
+                <div class="form-floating mb-3">
+                    <input type="text" name="username" id="user_username" class="form-control fw-bold" placeholder="Usuario" required>
+                    <label>Nombre de Usuario (Login)</label>
+                </div>
+                
+                <div class="form-floating mb-3">
+                    <input type="password" name="password" id="user_password" class="form-control" placeholder="Contraseña">
+                    <label>Contraseña <span id="passHelp" class="text-muted">(Dejar vacío para no cambiar)</span></label>
+                </div>
 
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select name="role" id="user_role" class="form-select fw-bold text-primary" required onchange="toggleUserTeam()">
+                                <option value="superadmin">Super Admin</option>
+                                <option value="coach" selected>Coach / Capitán</option>
+                            </select>
+                            <label>Rol del Usuario</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select name="team_id" id="user_team_id" class="form-select">
+                                <option value="">-- Sin Equipo --</option>
+                            </select>
+                            <label>Vincular a Equipo</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4">Guardar Usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+<script src="js/admin-crud.js"></script>
+
+<script>
     document.getElementById("menu-toggle").addEventListener("click", (e) => { e.preventDefault(); document.body.classList.toggle("toggled"); });
     function toggleMenu() { document.body.classList.toggle("toggled"); }
 
@@ -288,7 +481,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         });
     });
 
-    async function logout() { if(confirm('¿Cerrar sesión?')) { await fetch('../api.php?action=admin_logout'); window.location.href = 'login.php'; } }
     function previewImage(input) { if (input.files && input.files[0]) { var reader = new FileReader(); reader.onload = function(e) { document.getElementById('previewLogo').src = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
 </script>
 </body>
