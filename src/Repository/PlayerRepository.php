@@ -15,7 +15,7 @@ class PlayerRepository {
             throw new Exception("Error al preparar la consulta: " . $this->db->error);
         }
 
-        $stmt->bind_param("isi", $teamId, $name, $number, $photoUrl);
+        $stmt->bind_param("isis", $teamId, $name, $number, $photoUrl);
         $stmt->execute();
         
         return $stmt->insert_id; // Devuelve el ID del nuevo jugador

@@ -31,6 +31,7 @@ class TournamentController extends BaseController {
 
         try {
             $newId = $this->repo->createTournament($upperName, $upperCategory);
+            // CORRECCIÓN CLAVE: Envolvemos en un array como pide Response.php
             Response::success('Torneo creado exitosamente', ['newId' => $newId], Response::HTTP_CREATED);
         } catch (Exception $e) {
             Logger::write("Error en create Tournament: " . $e->getMessage());
@@ -65,21 +66,17 @@ class TournamentController extends BaseController {
             Response::success('Torneo eliminado correctamente');
         } catch (Exception $e) {
             Logger::write("Error en delete Tournament: " . $e->getMessage());
-            Response::error('No se pudo eliminar el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     
-    // Reemplaza tu método deleteFixture por este:
     public function deleteFixture($input) {
         $tId = $input['id'] ?? null;
         $this->validate(['id' => $tId], ['id' => 'required|integer']);
         $tIdInt = (int)$tId;
 
         try {
-            // Ya NO bloqueamos si hay partidos jugados, porque la intención del usuario es PURGAR el torneo.
-            // Ejecutamos la limpieza total (Fixtures, Matches, Score Logs y Rounds)
             $this->repo->clearFixture($tIdInt);
-            
             Response::success('Calendario y estadísticas purgadas correctamente');
         } catch (Exception $e) {
             Logger::write("Error deleteFixture: " . $e->getMessage());
@@ -106,15 +103,12 @@ class TournamentController extends BaseController {
             $this->validate(['tournament_id' => $tId], ['tournament_id' => 'required|integer']);
             $tIdInt = (int)$tId;
 
-            // --- NUEVA VALIDACIÓN DE NEGOCIO ---
             if ($this->repo->hasPlayedMatches($tIdInt)) {
-                // Si ya empezó, enviamos error 400 y detenemos la ejecución
                 Response::error(
                     'No se puede regenerar el fixture porque ya existen partidos en juego o finalizados. Debes cancelar los partidos primero.', 
                     Response::HTTP_BAD_REQUEST
                 );
             }
-            // -----------------------------------
 
             $configRaw = $input['config'] ?? [];
             if (is_string($configRaw)) {
@@ -131,8 +125,6 @@ class TournamentController extends BaseController {
             ];
 
             $generator = new FixtureGenerator();
-            // Asegúrate de que tu FixtureGenerator esté llamando a clearFixture() 
-            // antes de empezar a insertar los nuevos datos.
             $result = $generator->generate($tIdInt, $config);
 
             Response::json($result);
@@ -146,7 +138,6 @@ class TournamentController extends BaseController {
     public function updateFixtureMatch($input) {
         $cleanData = $this->sanitize($input);
 
-        // Aprovechamos la nueva regla 'in:' del BaseController para el status
         $this->validate($cleanData, [
             'match_id' => 'required|integer',
             'venue_id' => 'integer',
@@ -160,7 +151,6 @@ class TournamentController extends BaseController {
             
             $datetime = null;
             if (!empty($cleanData['date']) && !empty($cleanData['time'])) {
-                // Validación básica de formato fecha-hora
                 $datetime = $cleanData['date'] . ' ' . $cleanData['time'] . ':00';
             }
 

@@ -1,521 +1,529 @@
-[2026-02-26 13:24:50] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 10:34:25] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:24:50] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 10:34:25] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 13:13:37] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:24:50] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 13:13:37] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 13:13:41] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:24:50] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 13:13:41] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 13:54:37] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:43] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 13:54:37] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 13:54:39] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:43] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 13:54:39] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:15:34] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:43] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:15:34] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 14:15:36] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:43] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 14:15:36] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:16:52] Router: [POST] action=delete_player | DATA: Array
+(
+    [id] => 40
+)
+
+-----------------------------------
+[2026-03-02 14:16:52] PlayerRepository: Eliminando jugador ID: 40
+-----------------------------------
+[2026-03-02 14:16:52] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:47] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:17:05] Router: [POST] action=delete_player | DATA: Array
+(
+    [id] => 41
+)
+
+-----------------------------------
+[2026-03-02 14:17:05] PlayerRepository: Eliminando jugador ID: 41
+-----------------------------------
+[2026-03-02 14:17:05] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:25:47] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 14:17:15] Router: [POST] action=delete_player | DATA: Array
+(
+    [id] => 42
+)
+
+-----------------------------------
+[2026-03-02 14:17:15] PlayerRepository: Eliminando jugador ID: 42
+-----------------------------------
+[2026-03-02 14:17:15] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:04] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:17:25] Router: [POST] action=delete_player | DATA: Array
+(
+    [id] => 43
+)
+
+-----------------------------------
+[2026-03-02 14:17:25] PlayerRepository: Eliminando jugador ID: 43
+-----------------------------------
+[2026-03-02 14:17:25] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:04] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 14:17:35] Router: [POST] action=delete_player | DATA: Array
+(
+    [id] => 44
+)
+
+-----------------------------------
+[2026-03-02 14:17:35] PlayerRepository: Eliminando jugador ID: 44
+-----------------------------------
+[2026-03-02 14:17:35] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:35] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 14:17:44] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:35] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 14:17:44] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:25:17] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:35] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:25:17] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:29:14] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:35] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 14:29:14] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 14:29:16] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:42] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:29:16] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:36:58] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:26:42] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 14:36:58] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 14:37:00] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:28:49] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 14:37:00] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 14:50:03] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:28:49] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 14:50:03] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 14:50:07] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:28:50] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 14:50:07] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 15:10:06] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:28:50] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 15:10:06] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 15:10:08] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:37:07] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 15:10:08] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 15:24:31] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:37:07] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 15:24:31] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 15:24:32] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:37:07] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 15:24:32] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 15:43:12] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:37:07] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 15:43:12] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 15:43:13] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:38:16] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 15:43:13] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 16:37:46] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:38:16] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 16:37:46] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 16:37:46] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:38:16] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 16:37:46] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 16:41:08] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:38:16] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 16:41:08] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 16:55:45] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:05] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 16:55:45] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 16:55:46] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:05] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 16:55:46] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 17:21:41] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:05] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 17:21:41] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 17:21:43] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:05] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 17:21:43] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 17:44:45] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:08] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 17:44:45] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 17:44:46] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:08] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 17:44:46] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 17:53:29] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:08] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 17:53:29] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 17:53:37] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:09] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 17:53:37] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:01:31] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:34] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-02 18:01:31] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:01:33] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:34] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-02 18:01:33] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:12:11] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:34] Router: [GET] action=get_dashboard_stats | DATA: Array
+[2026-03-02 18:12:11] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:12:13] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:40:34] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-02 18:12:13] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:42:09] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:41:25] Router: [GET] action=admin_logout | DATA: Array
+[2026-03-02 18:42:09] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 18:42:10] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:41:47] Router: [POST] action=admin_login | DATA: Array
+[2026-03-02 18:42:10] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 18:56:16] Router: [GET] action=get_sync_data | DATA: Array
 (
-    [user] => admin
+)
+
+-----------------------------------
+[2026-03-02 18:56:16] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 18:56:45] Router: [GET] action=get_sync_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-03-02 18:56:45] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 19:06:10] Router: [GET] action=get_sync_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-03-02 19:06:11] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 19:06:14] Router: [GET] action=get_sync_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-03-02 19:06:14] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-02 19:22:37] Router: [GET] action=get_sync_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-03-02 19:22:37] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-02 19:22:39] Router: [GET] action=get_sync_data | DATA: Array
+(
+)
+
+-----------------------------------
+[2026-03-02 19:22:39] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-03 19:17:59] Router: [POST] action=admin_login | DATA: Array
+(
+    [user] => Admin
     [pass] => password
 )
 
 -----------------------------------
-[2026-02-26 13:41:48] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-03 19:17:59] Router: [GET] action=get_tournaments_list | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:41:48] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-03 19:17:59] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:41:48] Router: [GET] action=get_users | DATA: Array
+[2026-03-03 19:17:59] Router: [GET] action=get_users | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:44:45] Router: [GET] action=get_users | DATA: Array
+[2026-03-03 19:18:28] Router: [GET] action=get_slider_images | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:44:45] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-03 19:18:45] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:44:45] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-03 19:18:47] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:46:54] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-03 19:18:49] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:46:54] Router: [GET] action=get_users | DATA: Array
+[2026-03-03 19:19:24] Router: [GET] action=get_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:46:54] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-03 19:19:24] CatalogRepository: Obteniendo todos los catálogos
+-----------------------------------
+[2026-03-03 19:19:24] Router: [GET] action=get_fixture | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:11] Router: [GET] action=get_data | DATA: Array
+[2026-03-03 19:19:25] Router: [GET] action=get_tournaments_list | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:11] CatalogRepository: Obteniendo todos los catálogos
------------------------------------
-[2026-02-26 13:47:11] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-03 19:19:25] Router: [GET] action=get_users | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:15] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-03 19:19:25] Router: [GET] action=get_data_by_tournament | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:15] Router: [GET] action=get_users | DATA: Array
+[2026-03-04 15:09:07] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:15] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-04 15:09:07] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-04 15:09:09] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:32] Router: [POST] action=generate_fixture | DATA: Array
-(
-    [action] => generate_fixture
-    [tournament_id] => 32
-    [config] => Array
-        (
-            [vueltas] => 1
-            [pts_victoria] => 2
-            [pts_derrota] => 1
-            [pts_empate] => 1
-            [pts_forfeit_win] => 2
-            [pts_forfeit_loss] => 0
-        )
-
-)
-
+[2026-03-04 15:09:09] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
 -----------------------------------
-[2026-02-26 13:47:32] Controller: generateFixture request recibida.
------------------------------------
-[2026-02-26 13:47:32] TournamentRepository: Guardando reglas para torneo 32
------------------------------------
-[2026-02-26 13:47:35] Router: [GET] action=get_fixture | DATA: Array
+[2026-03-04 15:15:18] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:35] Router: [GET] action=get_data | DATA: Array
+[2026-03-04 15:15:18] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 0
+-----------------------------------
+[2026-03-04 15:15:19] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:35] CatalogRepository: Obteniendo todos los catálogos
+[2026-03-04 15:15:19] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
 -----------------------------------
-[2026-02-26 13:47:44] Router: [GET] action=get_users | DATA: Array
+[2026-03-04 15:16:37] Router: [POST] action=update_player | DATA: Array
+(
+    [id] => 38
+    [teamId] => 6
+    [name] => Raul Torres Francisco
+    [number] => 8
+)
+
+-----------------------------------
+[2026-03-04 15:16:37] PlayerRepository: Actualizando jugador ID: 38
+-----------------------------------
+[2026-03-04 15:16:51] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:44] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-04 15:16:51] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-04 15:19:53] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:44] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-04 15:19:53] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-04 15:20:51] Router: [GET] action=get_slider_images | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:47:47] Router: [GET] action=get_slider_images | DATA: Array
+[2026-03-04 15:20:51] Router: [GET] action=get_tournaments_list | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:50:50] Router: [GET] action=get_users | DATA: Array
+[2026-03-04 15:20:51] Router: [GET] action=get_dashboard_stats | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:50:50] Router: [GET] action=get_data_by_tournament | DATA: Array
+[2026-03-04 15:20:51] Router: [GET] action=get_fixture | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:50:50] Router: [GET] action=get_tournaments_list | DATA: Array
+[2026-03-06 09:46:33] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:51:15] Router: [GET] action=get_users | DATA: Array
+[2026-03-06 09:46:33] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
+-----------------------------------
+[2026-03-06 09:46:36] Router: [GET] action=get_sync_data | DATA: Array
 (
 )
 
 -----------------------------------
-[2026-02-26 13:51:15] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:15] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:37] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:37] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:37] Router: [GET] action=get_users | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:55] Router: [GET] action=get_users | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:55] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:51:55] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 13:52:03] Router: [GET] action=get_slider_images | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:09:26] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:09:26] Router: [GET] action=get_users | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:09:26] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:10:38] Router: [GET] action=get_data | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:10:38] CatalogRepository: Obteniendo todos los catálogos
------------------------------------
-[2026-02-26 14:10:38] Router: [GET] action=get_fixture | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:18] Router: [GET] action=get_data | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:18] CatalogRepository: Obteniendo todos los catálogos
------------------------------------
-[2026-02-26 14:12:18] Router: [GET] action=get_fixture | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:31] Router: [GET] action=get_users | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:31] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:31] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:12:39] Router: [GET] action=get_slider_images | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:03] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:03] Router: [GET] action=get_slider_images | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:03] Router: [GET] action=get_dashboard_stats | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:03] Router: [GET] action=get_fixture | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:05] Router: [GET] action=get_dashboard_stats | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:14:05] Router: [GET] action=get_fixture | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:15:14] Router: [GET] action=get_tournaments_list | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:15:14] Router: [GET] action=get_data_by_tournament | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:15:14] Router: [GET] action=get_users | DATA: Array
-(
-)
-
------------------------------------
-[2026-02-26 14:15:19] Router: [GET] action=admin_logout | DATA: Array
-(
-)
-
+[2026-03-06 09:46:36] CatalogRepository: Obteniendo datos de sincronización. Torneo ID: 27
 -----------------------------------
