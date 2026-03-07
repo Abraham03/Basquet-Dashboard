@@ -107,9 +107,34 @@ class MatchRepository {
                 }
                 $stmtEvent->close();
             }
+            
+            // ---------------------------------------------------------
+            // 3. Limpiar y Reemplazar Rosters (Alineaciones / Asistencia)
+            // ---------------------------------------------------------
+            if (isset($data['rosters']) && is_array($data['rosters'])) {
+                $delRoster = $this->db->prepare("DELETE FROM match_rosters WHERE match_id = ?");
+                $delRoster->bind_param("s", $id);
+                $delRoster->execute();
+                $delRoster->close();
+
+                $sqlRoster = "INSERT INTO match_rosters (match_id, player_id, team_side, jersey_number, is_captain) VALUES (?, ?, ?, ?, ?)";
+                $stmtRoster = $this->db->prepare($sqlRoster);
+
+                foreach ($data['rosters'] as $roster) {
+                    $pId = (int)$roster['player_id'];
+                    $side = (string)$roster['team_side']; // 'A' o 'B'
+                    $jersey = (int)$roster['jersey_number'];
+                    $isCap = (int)$roster['is_captain'];
+
+                    // Tipos: s (string), i (int), s (string), i (int), i (int)
+                    $stmtRoster->bind_param("sisii", $id, $pId, $side, $jersey, $isCap);
+                    $stmtRoster->execute();
+                }
+                $stmtRoster->close();
+            }
 
             // ---------------------------------------------------------
-            // 3. Vincular Fixture si aplica
+            // 4. Vincular Fixture si aplica
             // ---------------------------------------------------------
             $fixtureId = $data['fixture_id'] ?? null;
             if (!empty($fixtureId)) {
