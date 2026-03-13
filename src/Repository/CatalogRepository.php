@@ -29,8 +29,15 @@ class CatalogRepository {
             ");
             
             $players = $this->fetchAll("
-                SELECT p.* FROM players p 
+                SELECT 
+                    p.*,
+                    COALESCE(v.games_played, 0) AS games_played,
+                    COALESCE(v.total_games, 0) AS total_games,
+                    IF(v.total_games > 0, (v.games_played / v.total_games) * 100, 0) AS attendance_percentage,
+                    COALESCE(v.min_attendance_percent, 60) AS min_attendance_percent
+                FROM players p 
                 INNER JOIN tournament_teams tt ON p.team_id = tt.team_id 
+                LEFT JOIN v_player_attendance v ON p.id = v.player_id AND v.tournament_id = $tournamentId
                 WHERE tt.tournament_id = $tournamentId AND p.active = 1
             ");
             
@@ -111,9 +118,16 @@ class CatalogRepository {
             ),
             
             // 3. Jugadores de los equipos de este torneo
-            'players' => $this->fetchAll(
-                "SELECT p.* FROM players p
+            'players' => $this->fetchAll("
+                SELECT 
+                    p.*,
+                    COALESCE(v.games_played, 0) AS games_played,
+                    COALESCE(v.total_games, 0) AS total_games,
+                    IF(v.total_games > 0, (v.games_played / v.total_games) * 100, 0) AS attendance_percentage,
+                    COALESCE(v.min_attendance_percent, 60) AS min_attendance_percent
+                FROM players p
                  INNER JOIN tournament_teams tt ON p.team_id = tt.team_id
+                 LEFT JOIN v_player_attendance v ON p.id = v.player_id AND v.tournament_id = $tournamentId
                  WHERE tt.tournament_id = $tournamentId AND p.active = 1"
             ),
             

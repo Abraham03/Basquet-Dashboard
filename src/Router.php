@@ -41,6 +41,8 @@ class Router {
                     break;
                 case 'get_dashboard_stats':(new StatsController())->getDashboardStats($_GET['tournament_id'] ?? 0);
                     break;  
+                case 'get_team_player_stats':(new StatsController())->getTeamPlayerStats($_GET['tournament_id'], $_GET['team_id']);
+                    break;    
                 case 'get_tournaments_list': (new CatalogController())->getTournamentsList();
                     break;
                 case 'get_data_by_tournament':(new CatalogController())->getDataByTournament();
@@ -51,10 +53,20 @@ class Router {
                     $tid = isset($_GET['tournament_id']) ? (int)$_GET['tournament_id'] : 0;
                     (new CatalogController())->getSyncData($tid);
                     break;
+                case 'get_team_scheduling_status': 
+                    (new TournamentController())->getTeamSchedulingStatus(
+                        $_GET['tournament_id'] ?? 0, 
+                        $_GET['round_id'] ?? 1
+                    );
+                    break;    
                     
                 // --- Creacion
                 case 'create_tournament':(new TournamentController())->create($input);
                     break;
+                case 'add_manual_fixture':(new TournamentController())->addManualFixture($input);
+                    break;    
+                case 'save_tournament_rules':(new TournamentController())->saveTournamentRules($input); 
+                    break;    
                 case 'create_team':(new TeamController())->create($input);
                     break;
                 case 'add_player':(new PlayerController())->addPlayer($input);
@@ -66,9 +78,11 @@ class Router {
                             throw new Exception("El cuerpo de la petición está vacío (JSON inválido)");
                         }
                         (new TournamentController())->generateFixture($input); 
-                    break;    
+                    break;  
                     
                 // --- ACTUALIZACIÓN 
+                case 'update_fixture_teams': (new TournamentController())->updateFixtureTeams($input);
+                    break;
                 case 'update_tournament': (new TournamentController())->update($input); 
                     break;
                 case 'update_team': (new TeamController())->update($input); 

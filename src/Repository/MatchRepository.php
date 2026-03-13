@@ -28,8 +28,8 @@ class MatchRepository {
             $sqlMatch = "INSERT INTO matches 
                 (id, tournament_id, venue_id, team_a_id, team_b_id, team_a_name, team_b_name, 
                  score_a, score_b, current_period, time_left, status, match_date, 
-                 main_referee, aux_referee, scorekeeper, signature_data, updated_at, pdf_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINISHED', ?, ?, ?, ?, ?, ?, ?)
+                 main_referee, aux_referee, scorekeeper, signature_data, updated_at, pdf_url, forfeit_status, observaciones)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'FINISHED', ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                 score_a = VALUES(score_a), 
                 score_b = VALUES(score_b), 
@@ -43,7 +43,9 @@ class MatchRepository {
                 scorekeeper = VALUES(scorekeeper),
                 signature_data = VALUES(signature_data), 
                 updated_at = VALUES(updated_at),
-                pdf_url = COALESCE(VALUES(pdf_url), pdf_url)";
+                pdf_url = COALESCE(VALUES(pdf_url), pdf_url),
+                forfeit_status = VALUES(forfeit_status),
+                observaciones = VALUES(observaciones)";
 
             $stmt = $this->db->prepare($sqlMatch);
             
@@ -63,13 +65,15 @@ class MatchRepository {
             $scorek = $data['scorekeeper'] ?? '';
             $sig = !empty($data['signature_base64']) ? $data['signature_base64'] : null;
             $pdfUrl = $data['pdf_url'] ?? null;
+            $forfeit = $data['forfeit_status'] ?? 'NONE';
+            $obs = $data['observaciones'] ?? 'Sin novedad';
             
-            // Tipos: s i i i i s s i i i s s s s s s s s (Total 18)
-            $stmt->bind_param("siiiissiiissssssss", 
+            // Tipos: s i i i i s s i i i s s s s s s s s s (Total 20)
+            $stmt->bind_param("siiiissiiissssssssss", 
                 $id, $tourn, $venue, $ta_id, $tb_id, 
                 $ta_name, $tb_name, $sa, $sb, $period, $time, $date,
                 $ref1, $ref2, $scorek, $sig,
-                $currentTime, $pdfUrl
+                $currentTime, $pdfUrl, $forfeit, $obs
             );
 
             $stmt->execute();
@@ -117,7 +121,7 @@ class MatchRepository {
                 $delRoster->execute();
                 $delRoster->close();
 
-                $sqlRoster = "INSERT INTO match_rosters (match_id, player_id, team_side, jersey_number, is_captain) VALUES (?, ?, ?, ?, ?)";
+                $sqlRoster = "INSERT INTO match_rosters (match_id, player_id, team_side, jersey_number, is_captain, played) VALUES (?, ?, ?, ?, ?, ?)";
                 $stmtRoster = $this->db->prepare($sqlRoster);
 
                 foreach ($data['rosters'] as $roster) {
@@ -125,9 +129,10 @@ class MatchRepository {
                     $side = (string)$roster['team_side']; // 'A' o 'B'
                     $jersey = (int)$roster['jersey_number'];
                     $isCap = (int)$roster['is_captain'];
+                    $played = isset($roster['played']) ? (int)$roster['played'] : 0;
 
                     // Tipos: s (string), i (int), s (string), i (int), i (int)
-                    $stmtRoster->bind_param("sisii", $id, $pId, $side, $jersey, $isCap);
+                    $stmtRoster->bind_param("sisiii", $id, $pId, $side, $jersey, $isCap, $played);
                     $stmtRoster->execute();
                 }
                 $stmtRoster->close();

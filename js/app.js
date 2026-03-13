@@ -143,7 +143,7 @@ async function loadDashboard(tournamentId) {
             updateChartTheme(); 
             
             renderDefenseTable(d.best_defense);
-            renderStandings(d.standings);
+            renderStandings(d.standings, tournamentId);
 
             if(fixtureJson.status === 'success' && fixtureJson.data.rounds) {
                 renderFixture(fixtureJson.data.rounds);
@@ -294,14 +294,19 @@ function renderFixture(rounds) {
     contentContainer.innerHTML = panesHtml;
 }
 
-function renderStandings(teams) {
+function renderStandings(teams, tournamentId) {
     const tbody = document.getElementById('standingsBody');
+    // Si no pasamos tournamentId desde loadDashboard, lo tomamos del select
+    const tId = tournamentId || document.getElementById('tournamentSelect').value;
+
     tbody.innerHTML = teams.map((t, i) => {
         const isFirst = i === 0 ? 'color: var(--primary); font-size: 1.1rem;' : '';
         const j = parseInt(t.w) + parseInt(t.l) + parseInt(t.d || 0);
+        const safeTeamName = t.team.replace(/'/g, "\\'"); // Escapar comillas para el onclick
         
+        // CORRECCIÓN AQUÍ: Nos aseguramos de mandar t.id al onclick
         return `
-        <tr>
+        <tr class="clickable-row" onclick="showTeamDetails(${tId}, ${t.id}, '${safeTeamName}')" title="Ver plantilla y estadísticas">
             <td class="fw-bold" style="${isFirst}">${i + 1}</td>
             <td>
                 <div class="d-flex align-items-center">
@@ -319,9 +324,67 @@ function renderStandings(teams) {
             <td class="text-center fw-bold ${t.point_diff > 0 ? 'text-success' : (t.point_diff < 0 ? 'text-danger' : 'text-muted')}">
                 ${t.point_diff > 0 ? '+' : ''}${t.point_diff}
             </td>
-            <td class="text-center fw-bold fs-5" style="color: var(--primary); background: rgba(255, 87, 34, 0.05);">${t.pts}</td>
+            <td class="text-center fw-bold fs-5" style="color: var(--primary); background: rgba(255, 87, 34, 0.05); border-radius: 0 8px 8px 0;">${t.pts}</td>
         </tr>
     `}).join('');
+}
+
+
+async function showTeamDetails(tournamentId, teamId, teamName) {
+    document.getElementById('teamDetailsTitle').innerText = teamName;
+    const tbody = document.getElementById('teamPlayersBody');
+    
+    // Mostrando 5 columnas en el loading
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border" style="color: var(--primary);"></div></td></tr>';
+    
+    // Instanciar y mostrar el modal de Bootstrap
+    const modalEl = document.getElementById('teamDetailsModal');
+    let modal = bootstrap.Modal.getInstance(modalEl);
+    if (!modal) modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    try {
+        const res = await fetch(`${API_URL}?action=get_team_player_stats&tournament_id=${tournamentId}&team_id=${teamId}`);
+        const json = await res.json();
+        
+        if(json.status === 'success' && json.data.length > 0) {
+            tbody.innerHTML = json.data.map(p => {
+                const att = parseFloat(p.attendance_percentage);
+                const min = parseInt(p.min_attendance_percent);
+                const isBelow = att < min;
+                
+                const attColor = isBelow ? 'color: var(--primary-dark);' : 'color: var(--success);';
+                const attIcon = isBelow ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
+                const fallbackSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=f1f5f9&color=64748b`;
+                const photoSrc = p.photo_url ? p.photo_url.replace('../', '') : fallbackSrc;
+
+                // Estructura de 5 columnas: # | Jugador | PTS | 3PT | Asistencia
+                return `
+                <tr>
+                    <td class="fw-bold text-muted text-center">${p.default_number}</td>
+                    <td class="fw-bold">
+                        <div class="d-flex align-items-center">
+                            <img src="${photoSrc}" onerror="this.src='${fallbackSrc}'" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-right: 10px; border: 1px solid var(--border-color);">
+                            ${p.name}
+                        </div>
+                    </td>
+                    <td class="text-center fw-bold fs-6" style="color: var(--text-main);">${p.total_points}</td>
+                    <td class="text-center fw-medium text-muted">${p.triples}</td>
+                    <td class="text-end fw-bold" style="${attColor}">
+                        <div class="d-flex flex-column align-items-end">
+                            <span><i class="bi ${attIcon} me-1"></i> ${att.toFixed(0)}%</span>
+                            <span class="small fw-normal text-muted" style="font-size: 0.7rem;">${p.games_played} de ${p.total_games} juegos</span>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-person-x fs-3 d-block mb-2"></i>Sin jugadores registrados o sin actividad</td></tr>';
+        }
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Error de conexión</td></tr>';
+    }
 }
 
 function renderPlayerList(containerId, players, valueKey, label) {

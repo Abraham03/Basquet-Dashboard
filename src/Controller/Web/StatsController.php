@@ -5,6 +5,34 @@ class StatsController {
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
     }
+    
+    public function getTeamPlayerStats($tournamentId, $teamId) {
+        $tId = (int)$tournamentId;
+        $tmId = (int)$teamId;
+
+        try {
+            $sql = "
+                SELECT 
+                    p.id, p.name, p.default_number, p.photo_url,
+                    IFNULL(SUM(sl.points_scored), 0) as total_points,
+                    IFNULL(SUM(CASE WHEN sl.points_scored = 3 THEN 1 ELSE 0 END), 0) as triples,
+                    COALESCE(v.games_played, 0) AS games_played,
+                    COALESCE(v.total_games, 0) AS total_games,
+                    IF(v.total_games > 0, (v.games_played / v.total_games) * 100, 0) AS attendance_percentage,
+                    COALESCE(v.min_attendance_percent, 60) AS min_attendance_percent
+                FROM players p
+                LEFT JOIN score_logs sl ON p.id = sl.player_id AND sl.match_id IN (SELECT id FROM matches WHERE tournament_id = $tId)
+                LEFT JOIN v_player_attendance v ON p.id = v.player_id AND v.tournament_id = $tId
+                WHERE p.team_id = $tmId AND p.active = 1
+                GROUP BY p.id
+                ORDER BY total_points DESC, p.default_number ASC
+            ";
+            $players = $this->queryAll($sql);
+            Response::json(['status' => 'success', 'data' => $players]);
+        } catch (Throwable $e) {
+            Response::json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 
     public function getDashboardStats($tournamentId) {
         if (empty($tournamentId)) {
@@ -14,14 +42,15 @@ class StatsController {
         $id = (int)$tournamentId;
 
         try {
-            // 0. Obtener Reglas del Torneo para calcular Puntos Dinámicos
-            $rulesQuery = "SELECT points_win, points_draw, points_loss FROM tournament_rules WHERE tournament_id = $id LIMIT 1";
+            // 0. Obtener TODAS las Reglas del Torneo para calcular Puntos Dinámicos
+            $rulesQuery = "SELECT points_win, points_draw, points_loss, points_forfeit_win, points_forfeit_loss FROM tournament_rules WHERE tournament_id = $id LIMIT 1";
             $rules = $this->queryOne($rulesQuery);
             
-            // Valores por defecto si el torneo se generó sin reglas previas
-            $ptsWin  = isset($rules['points_win'])  ? (int)$rules['points_win']  : 2;
-            $ptsDraw = isset($rules['points_draw']) ? (int)$rules['points_draw'] : 1;
-            $ptsLoss = isset($rules['points_loss']) ? (int)$rules['points_loss'] : 1;
+            $ptsWin         = isset($rules['points_win']) ? (int)$rules['points_win'] : 2;
+            $ptsDraw        = isset($rules['points_draw']) ? (int)$rules['points_draw'] : 1;
+            $ptsLoss        = isset($rules['points_loss']) ? (int)$rules['points_loss'] : 1;
+            $ptsForfeitWin  = isset($rules['points_forfeit_win']) ? (int)$rules['points_forfeit_win'] : 2;
+            $ptsForfeitLoss = isset($rules['points_forfeit_loss']) ? (int)$rules['points_forfeit_loss'] : 0;
 
             // 1. KPIs Generales
             $kpiQuery = "SELECT 
@@ -30,26 +59,42 @@ class StatsController {
                 (SELECT IFNULL(AVG(score_a + score_b), 0) FROM matches WHERE tournament_id = $id AND status='FINISHED') as avg_points";
             $kpis = $this->queryOne($kpiQuery);
 
-            // 2. Tabla de Posiciones (Usando las reglas del torneo)
+            // 2. Tabla de Posiciones 
             $standingsQuery = "
-                SELECT t.name as team, t.logo_url,
+                SELECT t.id, t.name as team, t.logo_url,
                 
                 -- Victorias (W)
                 COUNT(CASE WHEN m.score_a > m.score_b AND m.team_a_id = t.id THEN 1 
                            WHEN m.score_b > m.score_a AND m.team_b_id = t.id THEN 1 END) as w,
                            
-                -- Derrotas (L)
+                -- Derrotas (L) incluyendo Doble Default
                 COUNT(CASE WHEN m.score_a < m.score_b AND m.team_a_id = t.id THEN 1 
-                           WHEN m.score_b < m.score_a AND m.team_b_id = t.id THEN 1 END) as l,
+                           WHEN m.score_b < m.score_a AND m.team_b_id = t.id THEN 1 
+                           WHEN m.forfeit_status = 'BOTH' AND (m.team_a_id = t.id OR m.team_b_id = t.id) THEN 1 END) as l,
                            
-                -- Empates (D)
-                COUNT(CASE WHEN m.score_a = m.score_b AND m.score_a IS NOT NULL AND (m.team_a_id = t.id OR m.team_b_id = t.id) THEN 1 END) as d,
+                -- Empates (D) asegurando que no haya forfeit
+                COUNT(CASE WHEN m.score_a = m.score_b AND m.score_a IS NOT NULL AND m.forfeit_status = 'NONE' AND (m.team_a_id = t.id OR m.team_b_id = t.id) THEN 1 END) as d,
 
-                -- CALCULO DE PUNTOS DINÁMICOS SEGÚN tournament_rules
+                -- CALCULO DE PUNTOS DINÁMICOS COMPLETOS
                 (
-                    COUNT(CASE WHEN m.score_a > m.score_b AND m.team_a_id = t.id THEN 1 WHEN m.score_b > m.score_a AND m.team_b_id = t.id THEN 1 END) * $ptsWin +
-                    COUNT(CASE WHEN m.score_a < m.score_b AND m.team_a_id = t.id THEN 1 WHEN m.score_b < m.score_a AND m.team_b_id = t.id THEN 1 END) * $ptsLoss +
-                    COUNT(CASE WHEN m.score_a = m.score_b AND m.score_a IS NOT NULL AND (m.team_a_id = t.id OR m.team_b_id = t.id) THEN 1 END) * $ptsDraw
+                    -- Victorias Normales
+                    COUNT(CASE WHEN m.score_a > m.score_b AND m.team_a_id = t.id AND m.forfeit_status = 'NONE' THEN 1 
+                               WHEN m.score_b > m.score_a AND m.team_b_id = t.id AND m.forfeit_status = 'NONE' THEN 1 END) * $ptsWin +
+                    
+                    -- Derrotas Normales
+                    COUNT(CASE WHEN m.score_a < m.score_b AND m.team_a_id = t.id AND m.forfeit_status = 'NONE' THEN 1 
+                               WHEN m.score_b < m.score_a AND m.team_b_id = t.id AND m.forfeit_status = 'NONE' THEN 1 END) * $ptsLoss +
+                    
+                    -- Empates Normales
+                    COUNT(CASE WHEN m.score_a = m.score_b AND m.score_a IS NOT NULL AND m.forfeit_status = 'NONE' AND (m.team_a_id = t.id OR m.team_b_id = t.id) THEN 1 END) * $ptsDraw +
+                    
+                    -- Victorias por Default (El equipo ganó porque el otro no se presentó)
+                    COUNT(CASE WHEN m.team_a_id = t.id AND m.forfeit_status = 'TEAM_B' THEN 1 
+                               WHEN m.team_b_id = t.id AND m.forfeit_status = 'TEAM_A' THEN 1 END) * $ptsForfeitWin +
+                               
+                    -- Derrotas por Default (El equipo faltó o hubo doble inasistencia)
+                    COUNT(CASE WHEN m.team_a_id = t.id AND m.forfeit_status IN ('TEAM_A', 'BOTH') THEN 1 
+                               WHEN m.team_b_id = t.id AND m.forfeit_status IN ('TEAM_B', 'BOTH') THEN 1 END) * $ptsForfeitLoss
                 ) as pts,
 
                 IFNULL(SUM(CASE WHEN m.team_a_id = t.id THEN m.score_a ELSE m.score_b END), 0) as pts_favor,
@@ -66,7 +111,7 @@ class StatsController {
                 LIMIT 10";
             $standings = $this->queryAll($standingsQuery);
 
-            // 3. Top Anotadores (MVP Race) - AHORA TRAE FOTO
+            // 3. Top Anotadores
             $scorersQuery = "
                 SELECT p.name, p.photo_url, SUM(sl.points_scored) as total_points, t.short_name as team
                 FROM score_logs sl
@@ -79,7 +124,7 @@ class StatsController {
                 LIMIT 5";
             $scorers = $this->queryAll($scorersQuery);
 
-            // 4. Top Triples - AHORA TRAE FOTO
+            // 4. Top Triples
             $triplesQuery = "
                 SELECT p.name, p.photo_url, COUNT(*) as triples_made, t.short_name as team
                 FROM score_logs sl

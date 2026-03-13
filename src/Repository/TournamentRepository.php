@@ -150,6 +150,7 @@ class TournamentRepository {
         return $result['total'] > 0;
     }
 
+
     // Actualiza tu método clearFixture existente
     public function clearFixture(int $tournamentId): void {
         // 1. Primero borramos los fixtures (hijos de tournament_rounds)
@@ -186,5 +187,91 @@ class TournamentRepository {
         }
         return $ids;
     }
+    
+    /**
+     * Obtiene el estado de programación de los equipos para el Constructor Manual.
+     * Te dice cuántos partidos totales tiene agendados un equipo, y si ya está agendado en la jornada actual.
+     */
+    public function getTeamSchedulingStatus($tournamentId, $roundOrder) {
+        // Hacemos el cruce (JOIN) con tournament_rounds para comparar el round_order
+        // en lugar de comparar contra el round_id (llave primaria).
+        $sql = "
+            SELECT 
+                t.id, 
+                t.name,
+                t.logo_url,
+                
+                (SELECT COUNT(*) FROM fixtures f 
+                 WHERE f.tournament_id = ? 
+                 AND (f.team_a_id = t.id OR f.team_b_id = t.id)
+                 AND f.status != 'CANCELLED') as total_scheduled,
+                 
+                (SELECT COUNT(*) FROM fixtures f 
+                 JOIN tournament_rounds r ON f.round_id = r.id
+                 WHERE r.round_order = ? AND r.tournament_id = ?
+                 AND (f.team_a_id = t.id OR f.team_b_id = t.id)
+                 AND f.status != 'CANCELLED') as scheduled_this_round
+                 
+            FROM tournament_teams tt
+            JOIN teams t ON tt.team_id = t.id
+            WHERE tt.tournament_id = ?
+            ORDER BY total_scheduled ASC, t.name ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        
+        // Parámetros: tournamentId, roundOrder, tournamentId, tournamentId
+        $stmt->bind_param("iiii", $tournamentId, $roundOrder, $tournamentId, $tournamentId);
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $teams = [];
+        while ($row = $result->fetch_assoc()) {
+            $teams[] = $row;
+        }
+        $stmt->close();
+
+        return $teams;
+    }
+    
+    
+    // Para agregar un partido manual a una jornada existente
+    public function addManualFixture($tournamentId, $roundId, $teamAId, $teamBId, $venueId = null, $scheduledDate = null) {
+        $sql = "INSERT INTO fixtures (tournament_id, round_id, team_a_id, team_b_id, venue_id, scheduled_datetime, status) 
+                VALUES (?, ?, ?, ?, ?, ?, 'SCHEDULED')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("iiiiis", $tournamentId, $roundId, $teamAId, $teamBId, $venueId, $scheduledDate);
+        $stmt->execute();
+        $id = $stmt->insert_id;
+        $stmt->close();
+        return $id;
+    }
+
+    // Para sustituir a un equipo que no llegó por otro (Edición de Fixture)
+    public function updateFixtureTeams($fixtureId, $newTeamAId, $newTeamBId) {
+        $sql = "UPDATE fixtures SET team_a_id = ?, team_b_id = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("iii", $newTeamAId, $newTeamBId, $fixtureId);
+        $stmt->execute();
+        $stmt->close();
+        return true;
+    }
+    
+    // Obtiene el ID de una jornada, si no existe, la crea
+    public function getOrCreateRound(int $tournamentId, string $name, int $order): int {
+        $stmt = $this->db->prepare("SELECT id FROM tournament_rounds WHERE tournament_id = ? AND round_order = ?");
+        $stmt->bind_param("ii", $tournamentId, $order);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($result && isset($result['id'])) {
+            return (int)$result['id'];
+        }
+
+        return $this->createRound($tournamentId, $name, $order);
+    }
+    
 }
 ?>
