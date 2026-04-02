@@ -9,6 +9,9 @@ let filteredPlayers = [];
 let allUsers = [];
 let pageUsers = 1;
 
+let allVenues = [];
+let pageVenues = 1;
+
 // Configuración de Paginación
 const ITEMS_PER_PAGE = 5;
 let pageTournaments = 1;
@@ -20,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFilteredData(0); 
     loadUsersList();
     setupForms();
+    loadVenuesList();
 
     // Escuchar el cambio de pestañas para ocultar la barra de filtros si estamos en Galería
     document.querySelectorAll('button[data-bs-toggle="pill"], a[data-bs-toggle="pill"]').forEach(tab => {
@@ -27,6 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const targetId = event.target.getAttribute('data-bs-target');
             const filterBar = document.getElementById('mainFilterBar');
             if(filterBar) filterBar.style.display = (targetId === '#tab-gallery') ? 'none' : 'flex';
+            if(targetId === '#tab-gallery') {
+            loadGallery();
+        }
         });
     });
 });
@@ -48,9 +55,23 @@ function showTableSkeleton(tableId, columns) {
     tbody.innerHTML = html;
 }
 
+function fillTournamentsSelect(selectId, tournaments, hasAllOption = false) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    let html = hasAllOption ? '<option value="0">⭐ Ver Todos los Torneos</option>' : '<option value="">-- Seleccionar Torneo --</option>';
+    
+    tournaments.forEach(t => {
+        const categoryLabel = t.category ? ` (${t.category})` : '';
+        html += `<option value="${t.id}">${t.name}${categoryLabel}</option>`;
+    });
+    
+    select.innerHTML = html;
+}
+
 // --- CARGA DE DATOS ---
 async function loadTournamentsList() {
-    showTableSkeleton('tableTournaments', 5); // 5 columnas ajustadas
+    showTableSkeleton('tableTournaments', 5);
     try {
         const res = await fetch(`${API_URL}?action=get_tournaments_list`);
         const json = await res.json();
@@ -59,15 +80,11 @@ async function loadTournamentsList() {
             pageTournaments = 1; 
             renderTournamentsTable(); 
             
-            const filterSelect = document.getElementById('dashboardFilterTournament');
-            if (filterSelect) {
-                const currentVal = filterSelect.value;
-                filterSelect.innerHTML = '<option value="0">⭐ Ver Todos los Torneos</option>';
-                allTournaments.forEach(t => filterSelect.innerHTML += `<option value="${t.id}">${t.name}</option>`);
-                if(currentVal) filterSelect.value = currentVal;
-            }
-
-            fillSelect('selectTournamentForTeam', allTournaments, true); 
+            // Actualizar select de filtro principal y select de asignación en equipos
+            fillTournamentsSelect('dashboardFilterTournament', allTournaments, true);
+            fillTournamentsSelect('selectTournamentForTeam', allTournaments, false);
+            
+            loadGallery();
         }
     } catch (e) { console.error("Error cargando torneos:", e); }
 }
@@ -107,7 +124,16 @@ async function loadFilteredData(tournamentId) {
 
 function filterDashboard() {
     const select = document.getElementById('dashboardFilterTournament');
-    if(select) loadFilteredData(select.value);
+    if(select) {
+        const tournamentId = select.value;
+        
+        // Carga equipos y jugadores (lo que ya hacía)
+        loadFilteredData(tournamentId);
+        
+        // NUEVO: Si estamos en la pestaña de galería o si queremos que se 
+        // actualice en segundo plano, llamamos a loadGallery
+        loadGallery(); 
+    }
 }
 
 function applyLocalPlayerFilter() {
@@ -196,12 +222,64 @@ function initializeTooltips() {
     [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 }
 
+async function loadVenuesList() {
+    showTableSkeleton('tableVenues', 4);
+    try {
+        // Aprovechamos el endpoint get_data que ya tienes y que devuelve 'venues'
+        const res = await fetch(`${API_URL}?action=get_data`);
+        const json = await res.json();
+        if (json.status === 'success') {
+            allVenues = json.data.venues;
+            pageVenues = 1;
+            renderVenuesTable();
+        }
+    } catch (e) { console.error("Error cargando sedes:", e); }
+}
 
-// --- TEMPLATES HTML ---
-const rowTournamentTemplate = (t) => `
+function editVenue(id) {
+    const v = allVenues.find(x => x.id == id);
+    if(!v) return;
+    
+    document.getElementById('venue_id').value = v.id;
+    document.getElementById('venue_name').value = v.name;
+    document.getElementById('venue_address').value = v.address || '';
+    
+    document.getElementById('titleVenue').innerText = 'Editar Sede';
+    new bootstrap.Modal(document.getElementById('modalVenue')).show();
+}
+
+function renderVenuesTable() {
+    renderPaginatedList(allVenues, pageVenues, 'tableVenues', 'paginationVenues', rowVenueTemplate, (newPage) => {
+        pageVenues = newPage; renderVenuesTable();
+    });
+}
+
+const rowVenueTemplate = (v) => `
+    <tr>
+        <td class="ps-4 fw-bold text-muted small">#${v.id}</td>
+        <td class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-2 opacity-75"></i>${v.name}</td>
+        <td class="text-muted small">${v.address || 'Sin especificar'}</td>
+        <td class="text-end pe-4">
+            <div class="btn-action-group shadow-sm">
+                <button class="btn btn-icon text-secondary" onclick="editVenue(${v.id})" title="Editar Sede"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-icon text-danger" onclick="deleteItem('delete_venue', ${v.id})" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>
+        </td>
+    </tr>`;
+
+
+const rowTournamentTemplate = (t) => {
+    const imgUrl = t.logo_url ? `../${t.logo_url}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
+    
+    return `
     <tr>
         <td class="ps-4 text-muted small fw-bold">#${t.id}</td>
-        <td class="fw-bold text-dark">${t.name}</td>
+        <td>
+            <div class="d-flex align-items-center">
+                <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TR';">
+                <span class="fw-bold text-dark">${t.name}</span>
+            </div>
+        </td>
         <td><span class="badge bg-light text-dark border px-3 py-2">${t.category || 'General'}</span></td>
         
         <td>
@@ -229,9 +307,18 @@ const rowTournamentTemplate = (t) => `
             </div>
         </td>
     </tr>`;
+};
 
 const rowTeamTemplate = (t) => {
     const imgUrl = t.logo_url ? `../${t.logo_url}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
+    
+    // Solo mostrar botón de descarga de actas si el admin ha seleccionado un torneo específico
+    const currentFilter = document.getElementById('dashboardFilterTournament').value;
+    let downloadBtn = '';
+    if (currentFilter != 0) {
+        downloadBtn = `<button class="btn btn-icon text-success" onclick="downloadTeamReports(${t.id})" data-bs-toggle="tooltip" title="Descargar Todas las Actas (ZIP)"><i class="bi bi-file-earmark-zip-fill fs-5"></i></button>`;
+    }
+
     return `
     <tr>
         <td class="ps-4 text-muted small fw-bold">#${t.id}</td>
@@ -247,6 +334,7 @@ const rowTeamTemplate = (t) => {
         <td><div class="text-muted small fw-medium"><i class="bi bi-person-badge me-1 text-primary opacity-50"></i>${t.coach_name || 'Sin coach'}</div></td>
         <td class="text-end pe-4">
             <div class="btn-action-group shadow-sm">
+                ${downloadBtn}
                 <button class="btn btn-icon text-secondary" onclick="editTeam(${t.id})" data-bs-toggle="tooltip" title="Editar Equipo"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-icon text-danger" onclick="deleteItem('delete_team', ${t.id})" data-bs-toggle="tooltip" title="Eliminar/Quitar"><i class="bi bi-trash"></i></button>
             </div>
@@ -290,6 +378,48 @@ function previewPlayerImage(input) {
         reader.onload = function(e) { document.getElementById('previewPlayerPhoto').src = e.target.result; }; 
         reader.readAsDataURL(input.files[0]); 
     } 
+}
+
+// --- FUNCION DE DESCARGA ZIP ---
+async function downloadTeamReports(teamId) {
+    const tournamentId = document.getElementById('dashboardFilterTournament').value;
+    
+    if(tournamentId == 0) {
+        Swal.fire('Atención', 'Por favor, selecciona un torneo en el filtro superior primero.', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Recopilando Actas...',
+        text: 'Generando archivo comprimido, esto puede tardar un momento.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const res = await fetch(`${API_URL}?action=download_team_reports`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({team_id: teamId, tournament_id: tournamentId})
+        });
+        
+        const json = await res.json();
+
+        if (json.status === 'success') {
+            Swal.close();
+            // Forzar descarga silenciosa mediante la creación de un enlace <a> temporal
+            const link = document.createElement('a');
+            link.href = json.data.download_url;
+            link.setAttribute('download', '');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            Swal.fire({ title: 'Aviso', text: json.message, icon: 'info' });
+        }
+    } catch (e) {
+        Swal.fire('Error', 'Hubo un problema de conexión al generar el archivo.', 'error');
+    }
 }
 
 async function logout() { 
@@ -512,7 +642,12 @@ function openModal(id) {
         if(selectTourn) selectTourn.value = currentFilter; 
     }
     
-    // Resetear foto de jugador si abrimos el modal de jugador
+    if(id === 'modalTournament') {
+        document.getElementById('previewTournLogo').src = 'https://placehold.co/80?text=Logo';
+        document.getElementById('previewArbitroLogo').src = 'https://placehold.co/80?text=Ref';
+        document.getElementById('titleTournament').innerText = 'Nuevo Torneo';
+    }
+    
     if(id === 'modalPlayer') {
         const img = document.getElementById('previewPlayerPhoto');
         if(img) img.src = 'https://placehold.co/80?text=Foto';
@@ -532,9 +667,23 @@ function openFixtureConfig(tournamentId) {
 function editTournament(id) {
     const item = allTournaments.find(x => x.id == id);
     if(!item) return;
+    
     document.getElementById('tourn_id').value = item.id;
     document.getElementById('tourn_name').value = item.name;
     document.getElementById('tourn_cat').value = item.category;
+    
+    // Cargar Previsualización de Logo Torneo
+    const imgTourn = document.getElementById('previewTournLogo');
+    if(imgTourn) {
+        imgTourn.src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
+    }
+
+    // Cargar Previsualización de Logo Árbitro (guardado en url_arbitro)
+    const imgRef = document.getElementById('previewArbitroLogo');
+    if(imgRef) {
+        imgRef.src = item.url_arbitro ? `../${item.url_arbitro}` : 'https://placehold.co/80?text=Ref';
+    }
+
     document.getElementById('titleTournament').innerText = 'Editar Torneo';
     new bootstrap.Modal(document.getElementById('modalTournament')).show();
 }
@@ -552,7 +701,7 @@ function editTeam(id) {
     if(img) img.src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
     
     const currentFilter = document.getElementById('dashboardFilterTournament').value;
-    const selectTourn = document.getElementById('selectTournamentForTeam');
+    const selectTourn = document.getElementById('selectTournamentForTeam').disabled = true;
     if(selectTourn) selectTourn.value = currentFilter;
 
     document.getElementById('titleTeam').innerText = 'Editar Equipo';
@@ -579,7 +728,7 @@ function editPlayer(id) {
 }
 
 function setupForms() {
-    ['formTournament', 'formTeam', 'formPlayer', 'formUser'].forEach(id => {
+    ['formTournament', 'formTeam', 'formPlayer', 'formUser', 'formVenue'].forEach(id => {
         const formEl = document.getElementById(id);
         if(!formEl) return;
         
@@ -603,6 +752,7 @@ function setupForms() {
                     loadTournamentsList();
                     loadFilteredData(document.getElementById('dashboardFilterTournament').value);
                     if(id === 'formUser') loadUsersList();
+                    if(id === 'formVenue') loadVenuesList();
                 } else {
                     Swal.fire('Error', json.message, 'error');
                 }
@@ -661,23 +811,40 @@ function fillSelectTeams(items, id, all) {
 
 // --- FUNCIONES DE GALERÍA ---
 async function loadGallery() {
+    const tournamentId = document.getElementById('dashboardFilterTournament').value;
     const container = document.getElementById('galleryContainer');
-    container.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div></div>';
+    
+    if (!tournamentId || tournamentId == 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-funnel fs-1 d-block mb-3" style="opacity: 0.3;"></i>
+                <h4 class="fw-bold">Galería por Torneo</h4>
+                <p>Selecciona un torneo en la parte superior para administrar sus fotos de portada.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2">Cargando slider del torneo...</p></div>';
     
     try {
-        const res = await fetch(`${API_URL}?action=get_slider_images`);
+        const res = await fetch(`${API_URL}?action=get_slider_images&tournament_id=${tournamentId}`);
         const json = await res.json();
         
         if (json.status === 'success') {
             if(json.data.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center py-5 text-muted"><i class="bi bi-images fs-1 d-block mb-3"></i>No hay imágenes en la galería. Sube una.</div>';
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="bi bi-images fs-1 d-block mb-3" style="opacity: 0.3;"></i>
+                        <h5 class="fw-bold">Sin imágenes</h5>
+                        <p>Este torneo aún no tiene fotos en el slider público.</p>
+                    </div>`;
                 return;
             }
 
             container.innerHTML = json.data.map(img => `
-                <div class="col-md-4 col-lg-3">
-                    <div class="position-relative">
-                        <img src="../${img.url}" class="admin-gallery-img shadow-sm" alt="Slider">
+                <div class="col-md-4 col-lg-3 fade-in">
+                    <div class="position-relative border rounded-3 overflow-hidden shadow-sm">
+                        <img src="../${img.url}" class="admin-gallery-img" alt="Slider">
                         <button class="btn btn-danger img-delete-btn" onclick="deleteGalleryImage('${img.filename}')" title="Eliminar">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -685,14 +852,49 @@ async function loadGallery() {
                 </div>
             `).join('');
         }
-    } catch(e) { console.error("Error cargando galería:", e); }
+    } catch(e) { 
+        container.innerHTML = '<div class="alert alert-danger mx-3">Error al conectar con el servidor de imágenes.</div>';
+    }
+}
+
+// Asegúrate de que la función previewImage sea genérica (como la tienes al final de tu script):
+function previewImage(input, imgElementId = 'previewLogo') { 
+    if (input.files && input.files[0]) { 
+        var reader = new FileReader(); 
+        reader.onload = function(e) { 
+            document.getElementById(imgElementId).src = e.target.result; 
+        }; 
+        reader.readAsDataURL(input.files[0]); 
+    } 
 }
 
 async function uploadGalleryImage(input) {
+    const tournamentId = document.getElementById('dashboardFilterTournament').value;
+    
+    // VALIDACIÓN: Si no hay torneo seleccionado (valor 0)
+    if (!tournamentId || tournamentId == 0) {
+        Swal.fire({
+            title: 'Torneo no seleccionado',
+            text: 'Por favor, selecciona un torneo en el filtro superior antes de subir imágenes para el slider.',
+            icon: 'warning',
+            confirmButtonColor: '#FF5722'
+        });
+        input.value = ''; // Limpiar el input file
+        return;
+    }
+
     if (!input.files || input.files.length === 0) return;
     
+    // Mostrar loading
+    Swal.fire({
+        title: 'Subiendo imagen...',
+        didOpen: () => { Swal.showLoading(); },
+        allowOutsideClick: false
+    });
+
     const formData = new FormData();
     formData.append('image', input.files[0]);
+    formData.append('tournament_id', tournamentId);
     formData.append('action', 'upload_slider_image');
     input.value = ''; 
     
@@ -700,22 +902,221 @@ async function uploadGalleryImage(input) {
         const res = await fetch(API_URL, { method: 'POST', body: formData });
         const json = await res.json();
         if(json.status === 'success') {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Imagen subida', showConfirmButton: false, timer: 3000 });
-            loadGallery(); 
+            Swal.fire({ 
+                toast: true, 
+                position: 'top-end', 
+                icon: 'success', 
+                title: 'Imagen subida al torneo', 
+                showConfirmButton: false, 
+                timer: 3000 
+            });
+            loadGallery(); // Recargar la vista actual
         } else {
             Swal.fire('Error', json.message, 'error');
         }
-    } catch(e) { Swal.fire('Error', 'Error al subir imagen', 'error'); }
+    } catch(e) { 
+        Swal.fire('Error', 'Error de conexión al subir la imagen', 'error'); 
+    }
 }
 
-async function deleteGalleryImage(filename) {
+// =========================================================
+// --- EXPLORADOR DE ARCHIVOS PROFESIONAL ---
+// =========================================================
+
+let currentFileFolder = '';
+let selectedFilesList = [];
+
+function loadFilesDashboard() {
+    document.getElementById('viewFolders').style.display = 'flex';
+    document.getElementById('viewFiles').style.display = 'none';
+    document.getElementById('fileManagerActions').style.display = 'none';
+    
+    document.getElementById('fileManagerTitle').innerText = 'Archivos y Documentos';
+    document.getElementById('fileManagerSubtitle').innerText = 'Explora las actas y reportes generados en el servidor.';
+    currentFileFolder = '';
+    resetFileSelection();
+}
+
+async function openFolder(folderPath, folderDisplayName) {
+    document.getElementById('viewFolders').style.display = 'none';
+    document.getElementById('viewFiles').style.display = 'block';
+    document.getElementById('fileManagerActions').style.display = 'flex';
+    
+    document.getElementById('fileManagerTitle').innerText = folderDisplayName;
+    document.getElementById('fileManagerSubtitle').innerText = `/assets/${folderPath}/`;
+    
+    currentFileFolder = folderPath;
+    resetFileSelection();
+    
+    const tbody = document.getElementById('tableFiles');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </td>
+        </tr>`;
+
+    try {
+        const res = await fetch(`${API_URL}?action=get_files&folder=${folderPath}`);
+        const json = await res.json();
+        
+        if (json.status === 'success') {
+            if (json.data.length === 0) {
+                // Modificación 1: Diseño limpio y amigable cuando no hay datos
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <div class="text-muted p-4">
+                                <i class="bi bi-folder2-open" style="font-size: 3.5rem; opacity: 0.5;"></i>
+                                <h5 class="fw-bold mt-3 mb-1">Carpeta Vacía</h5>
+                                <p class="small mb-0">Aún no se han generado archivos en este directorio.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                document.getElementById('selectAllFiles').disabled = true;
+                return;
+            }
+
+            document.getElementById('selectAllFiles').disabled = false;
+            
+            tbody.innerHTML = json.data.map(item => {
+                let icon = '<i class="bi bi-file-earmark fs-4 text-secondary"></i>';
+                let isZip = false;
+                
+                if (item.is_dir) {
+                    icon = '<i class="bi bi-folder-fill fs-3 text-warning"></i>';
+                } else if (item.name.toLowerCase().endsWith('.pdf')) {
+                    icon = '<i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>';
+                } else if (item.name.toLowerCase().endsWith('.zip')) {
+                    icon = '<i class="bi bi-file-earmark-zip-fill fs-3 text-success"></i>';
+                    isZip = true;
+                }
+
+                let onClickAction = '';
+                if (item.is_dir) onClickAction = `onclick="openFolder('${item.path}', '${item.name}')"`;
+                else if (isZip) onClickAction = `onclick="triggerDownload('${item.url}')"`;
+                else onClickAction = `onclick="window.open('${item.url}', '_blank')"`;
+
+                let actionBtns = '';
+                if (item.is_dir) {
+                    actionBtns = `<button class="btn btn-sm btn-light border fw-bold text-muted" ${onClickAction}>Abrir <i class="bi bi-arrow-right ms-1"></i></button>`;
+                } else {
+                    actionBtns = `<a href="${item.url}" download class="btn btn-icon text-primary" title="Descargar"><i class="bi bi-download"></i></a>`;
+                }
+
+                // Agregamos el botón de eliminar a TODOS (Carpetas y Archivos)
+                actionBtns += `<button class="btn btn-icon text-danger ms-1" onclick="deleteSystemFile('${item.path}', ${item.is_dir})" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+
+                return `
+                <tr class="clickable-row">
+                    <td class="ps-4" onclick="event.stopPropagation();">
+                        <input class="form-check-input file-checkbox" type="checkbox" value="${item.path}" onchange="updateFileSelection()">
+                    </td>
+                    <td ${onClickAction}>
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">${icon}</div>
+                            <span class="fw-bold text-dark">${item.name}</span>
+                        </div>
+                    </td>
+                    <td class="text-muted fw-bold small" ${onClickAction}>${item.size}</td>
+                    <td class="text-muted small" ${onClickAction}>${item.date}</td>
+                    <td class="text-end pe-4">
+                        <div class="btn-action-group shadow-sm">
+                            ${actionBtns}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4 fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Error al leer la carpeta.</td></tr>`;
+    }
+}
+
+function triggerDownload(url) {
+    const link = document.createElement('a');
+    link.href = url; link.setAttribute('download', '');
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+// Lógica de Selección Múltiple
+function toggleSelectAllFiles(checkbox) {
+    const checkboxes = document.querySelectorAll('.file-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateFileSelection();
+}
+
+function updateFileSelection() {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    selectedFilesList = Array.from(checkboxes).map(cb => cb.value);
+    
+    const btnDelete = document.getElementById('btnDeleteMultiple');
+    const countSpan = document.getElementById('selectedCount');
+    
+    countSpan.innerText = selectedFilesList.length;
+    if (selectedFilesList.length > 0) {
+        btnDelete.classList.remove('d-none');
+    } else {
+        btnDelete.classList.add('d-none');
+        document.getElementById('selectAllFiles').checked = false;
+    }
+}
+
+function resetFileSelection() {
+    selectedFilesList = [];
+    document.getElementById('selectAllFiles').checked = false;
+    document.getElementById('btnDeleteMultiple').classList.add('d-none');
+}
+
+// Eliminación Individual o Múltiple
+async function deleteSystemFile(path, isDir = false) {
+    executeFileDeletion([path], isDir ? '¿Eliminar carpeta completa?' : '¿Eliminar documento?', isDir ? 'Se borrará la carpeta y todos los archivos en su interior.' : 'Se borrará físicamente del servidor.');
+}
+
+async function deleteMultipleFiles() {
+    if (selectedFilesList.length === 0) return;
+    executeFileDeletion(selectedFilesList, `¿Eliminar ${selectedFilesList.length} elementos?`, 'Las carpetas seleccionadas también serán borradas junto con su contenido.');
+}
+
+async function executeFileDeletion(pathsArray, titleText, descText) {
     const result = await Swal.fire({
-        title: '¿Eliminar imagen?',
-        text: "Se borrará del slider público",
+        title: titleText,
+        text: descText,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await fetch(`${API_URL}?action=delete_file`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ paths: pathsArray })
+            });
+            const json = await res.json();
+            
+            if (json.status === 'success') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 });
+                openFolder(currentFileFolder, document.getElementById('fileManagerTitle').innerText); 
+            } else {
+                Swal.fire('Error', json.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error', 'Fallo al comunicarse con el servidor.', 'error');
+        }
+    }
+}
+
+async function deleteGalleryImage(filename) {
+    const tournamentId = document.getElementById('dashboardFilterTournament').value;
+    const result = await Swal.fire({
+        title: '¿Eliminar imagen?',
+        icon: 'warning',
+        showCancelButton: true,
         confirmButtonText: 'Sí, eliminar'
     });
 
@@ -724,15 +1125,9 @@ async function deleteGalleryImage(filename) {
             const res = await fetch(`${API_URL}?action=delete_slider_image`, { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({filename: filename})
+                body: JSON.stringify({filename: filename, tournament_id: tournamentId})
             });
-            const json = await res.json();
-            if(json.status === 'success') {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Imagen eliminada', showConfirmButton: false, timer: 3000 });
-                loadGallery(); 
-            } else {
-                Swal.fire('Error', json.message, 'error');
-            }
-        } catch(e) { Swal.fire('Error', 'Error al eliminar', 'error'); }
+            loadGallery(); 
+        } catch(e) { console.error(e); }
     }
 }

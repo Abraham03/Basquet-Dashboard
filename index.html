@@ -20,8 +20,8 @@
 <nav class="navbar-glass mb-4 sticky-top">
     <div class="container d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
-            <i class="bi bi-basket2-fill fs-2 me-2" style="color: var(--primary);"></i>
-            <span class="d-none d-sm-inline fw-bold" style="font-size: 1.4rem; letter-spacing: -0.5px;">Basket Pro</span>
+            <img src="assets/imagenes/Logo.png" alt="Vanball Logo" style="height: 40px; width: auto;" class="me-2">
+            <span class="d-none d-sm-inline fw-bold" style="font-size: 1.4rem; letter-spacing: -0.5px;">Vanball</span>
         </div>
         <div class="d-flex align-items-center flex-grow-1 justify-content-end ms-2 ms-sm-4">
             <select id="tournamentSelect" class="form-select custom-select shadow-sm" style="max-width: 320px;">
@@ -99,20 +99,22 @@
         </div>
 
         <div class="mb-5">
-            <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
                 <h4 class="fw-bold mb-0" style="color: var(--text-main)">Resultados y Calendario</h4>
-                <div id="liveIndicator" class="live-badge d-none">
-                    <span class="spinner-grow spinner-grow-sm me-1" style="width: 0.4rem; height: 0.4rem;"></span> EN VIVO
+                
+                <div class="d-flex align-items-center gap-3">
+                    <div id="liveIndicator" class="live-badge d-none">
+                        <span class="spinner-grow spinner-grow-sm me-1" style="width: 0.4rem; height: 0.4rem;"></span> EN VIVO
+                    </div>
+                    
+                    <select id="roundSelectPublic" class="form-select custom-select shadow-sm" style="min-width: 150px; font-weight: 700; color: var(--primary);" onchange="changePublicRound(this.value)">
+                        <option value="" disabled selected>Jornadas...</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="rounds-nav-container">
-                <ul class="nav nav-pills nav-pills-scroll" id="fixtureTabs" role="tablist"></ul>
-                <div style="position: absolute; right: 0; top:0; bottom:5px; width: 40px; background: linear-gradient(to right, transparent, var(--bg-body)); pointer-events: none;"></div>
-            </div>
-
             <div class="tab-content" id="fixtureContent">
-                <div class="text-center text-muted py-4 small">Selecciona una jornada...</div>
+                <div class="text-center text-muted py-4 small">Selecciona una jornada para ver los partidos.</div>
             </div>
         </div>
         
@@ -128,7 +130,7 @@
                                     <th>Equipo</th>
                                     <th class="text-center" title="Juegos Jugados">J</th>
                                     <th class="text-center" title="Juegos Ganados">JG</th>
-                                    <th class="text-center" title="Juegos Empatados">JE</th>
+                                    <th class="text-center" title="Juegos por Default">JD</th>
                                     <th class="text-center" title="Juegos Perdidos">JP</th>
                                     <th class="text-center" title="Puntos a Favor / Puntos en Contra">PUNTOS +/-</th>
                                     <th class="text-center" title="Diferencia de Puntos">DIF</th>
@@ -209,25 +211,21 @@
     </div>
 </div>
 
-<footer class="footer-custom">
+<footer class="footer-custom py-4 border-top mt-auto">
     <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-            <span class="fw-bold" style="color: var(--text-main); font-size: 0.95rem;">
-                <i class="bi bi-basket2-fill text-primary me-1"></i> Basket Pro
-            </span>
-            <span class="text-muted" style="font-size: 0.8rem;">&copy; <span id="currentYear"></span></span>
+        
+        <div class="text-muted" style="font-size: 0.85rem;">
+            &copy; <span id="currentYear"></span> Todos los derechos reservados.
         </div>
 
-        <div class="d-flex align-items-center gap-4">
-            <div class="d-flex gap-3">
-                <a href="#" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                <a href="#" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-            </div>
-            <div style="width: 1px; height: 20px; background-color: var(--border-color);"></div>
-            <a href="https://techsolutions.management/" class="footer-dev-badge" target="_blank" rel="noopener">
-                <i class="bi bi-code-slash text-primary"></i> TechSolutions
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted" style="font-size: 0.85rem;">Desarrollado por</span>
+            <a href="https://techsolutions.management/" class="d-flex align-items-center text-decoration-none" target="_blank" rel="noopener" style="opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
+                <img id="techSolutionsLogo" src="assets/imagenes/logo2.png" alt="Logo TechSolutions" style="height: 22px; width: auto; margin-right: 6px;">
+                <span style="color: var(--text-main); font-weight: 700; font-size: 0.95rem; letter-spacing: -0.3px;">TechSolutions</span>
             </a>
         </div>
+
     </div>
 </footer>
 

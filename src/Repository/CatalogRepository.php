@@ -20,8 +20,8 @@ class CatalogRepository {
         $relationships = [];
         $fixtures = [];
 
-        // Si mandamos un ID de torneo mayor a 0, traemos su información pesada
         if ($tournamentId > 0) {
+            // === 1. DESCARGA FILTRADA POR TORNEO ===
             $teams = $this->fetchAll("
                 SELECT t.* FROM teams t 
                 INNER JOIN tournament_teams tt ON t.id = tt.team_id 
@@ -61,13 +61,52 @@ class CatalogRepository {
                 WHERE f.tournament_id = $tournamentId
                 ORDER BY r.round_order ASC, f.id ASC
             ");
-            // Procesar el status de los partidos terminados
-            foreach ($fixtures as &$fixture) {
-                if (!empty($fixture['match_status'])) {
-                    $fixture['status'] = $fixture['match_status'];
-                }
+
+        } else {
+            // === 2. DESCARGA GLOBAL (Primera vez que se instala la app, Torneo = 0) ===
+            $teams = $this->fetchAll("SELECT * FROM teams");
+            
+            $players = $this->fetchAll("
+                SELECT p.*, 
+                       0 AS games_played, 
+                       0 AS total_games, 
+                       0 AS attendance_percentage, 
+                       60 AS min_attendance_percent 
+                FROM players p 
+                WHERE p.active = 1
+            ");
+            
+            $relationships = $this->fetchAll("SELECT tournament_id, team_id FROM tournament_teams");
+            
+            $fixtures = $this->fetchAll("
+                SELECT f.*, 
+                COALESCE(r.name, 'Jornada') as round_name, 
+                ta.name as team_a, ta.logo_url as logo_a,
+                tb.name as team_b, tb.logo_url as logo_b,
+                v.name as venue_name,
+                m.score_a, m.score_b, m.pdf_url, m.status as match_status
+                FROM fixtures f
+                LEFT JOIN tournament_rounds r ON f.round_id = r.id
+                LEFT JOIN teams ta ON f.team_a_id = ta.id
+                LEFT JOIN teams tb ON f.team_b_id = tb.id
+                LEFT JOIN venues v ON f.venue_id = v.id
+                LEFT JOIN matches m ON f.match_id COLLATE utf8mb4_unicode_ci = m.id COLLATE utf8mb4_unicode_ci
+                ORDER BY f.id ASC
+            ");
+        }
+
+        // Procesar el status de los partidos terminados (Aplica para ambas condiciones)
+        foreach ($fixtures as &$fixture) {
+            if (!empty($fixture['match_status'])) {
+                $fixture['status'] = $fixture['match_status'];
             }
         }
+        
+        
+        // Llamamos al repositorio de oficiales para inyectarlo en el JSON
+        require_once __DIR__ . '/OfficialRepository.php';
+        $officialRepo = new OfficialRepository(Database::getInstance()); // <--- CORREGIDO
+        $officials = $officialRepo->getAllActive();
 
         return [
             // Siempre enviamos torneos y sedes (pesan muy poco)
@@ -76,7 +115,8 @@ class CatalogRepository {
             'teams'       => $teams,
             'players'     => $players,
             'tournament_teams' => $relationships,
-            'fixtures'    => $fixtures
+            'fixtures'    => $fixtures,
+            'officials'   => $officials
         ];
     }
 
@@ -139,7 +179,7 @@ class CatalogRepository {
     
     // 1. Solo lista de torneos (Para el select del dashboard)
     public function getTournamentsList(): array {
-        return $this->fetchAll("SELECT id, name, category FROM tournaments ORDER BY id DESC");
+        return $this->fetchAll("SELECT * FROM tournaments ORDER BY id DESC");
     }
 
     // 2. Datos filtrados por torneo (Para las tablas del dashboard)

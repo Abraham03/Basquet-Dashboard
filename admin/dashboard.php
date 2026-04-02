@@ -117,6 +117,45 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             color: var(--primary-color);
             background: #fff5f2;
         }
+        /* --- ESTILOS DEL EXPLORADOR DE ARCHIVOS --- */
+        .folder-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            height: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .folder-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--border-color); transition: background-color 0.3s;
+        }
+        .folder-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: var(--hover-shadow); 
+            border-color: var(--primary-color);
+        }
+        .folder-card:hover::before { background: var(--primary-color); }
+        
+        .file-icon-box {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+        }
+        .file-path-badge {
+            font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+            letter-spacing: 1px; text-transform: uppercase;
+            background: var(--badge-bg); padding: 4px 8px; border-radius: 6px;
+            display: inline-block; margin-bottom: 12px;
+        }
+        
+        /* Animación para la carga de archivos */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -141,6 +180,12 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             </a>
             <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-users">
                 <i class="bi bi-person-badge"></i> Usuarios / Accesos
+            </a>
+            <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-venues">
+                <i class="bi bi-geo-alt"></i> Canchas / Sedes
+            </a>
+            <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-files" onclick="loadFilesDashboard()">
+                <i class="bi bi-folder2-open"></i> Archivos / PDF
             </a>
             <a href="#" class="nav-link-custom" data-bs-toggle="pill" data-bs-target="#tab-gallery" onclick="loadGallery()">
                 <i class="bi bi-images"></i> Slider Home
@@ -268,6 +313,74 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="row g-4" id="galleryContainer"></div>
                 </div>
                 
+                <div class="tab-pane fade" id="tab-files">
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div>
+                            <h3 class="fw-bold mb-1" id="fileManagerTitle">Archivos y Documentos</h3>
+                            <p class="text-muted mb-0" id="fileManagerSubtitle">Explora las actas y reportes generados en el servidor.</p>
+                        </div>
+                        <div id="fileManagerActions" style="display: none;" class="d-flex gap-2">
+                            <button class="btn btn-outline-danger rounded-pill px-3 shadow-sm fw-bold d-none" id="btnDeleteMultiple" onclick="deleteMultipleFiles()">
+                                <i class="bi bi-trash me-1"></i>Eliminar (<span id="selectedCount">0</span>)
+                            </button>
+                            <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm fw-bold" onclick="loadFilesDashboard()" id="btnBackFiles">
+                                <i class="bi bi-arrow-left me-2"></i>Volver al Inicio
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 fade-in" id="viewFolders">
+                        <div class="col-md-6">
+                            <div class="folder-card" style="cursor: pointer;" onclick="openFolder('downloads', 'Reportes de Equipos')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="file-path-badge">/assets/downloads/</span>
+                                        <h4 class="fw-bold mb-2 text-dark">Reportes (ZIP)</h4>
+                                        <p class="text-muted small mb-0">Carpetas comprimidas descargadas por los usuarios.</p>
+                                    </div>
+                                    <div class="file-icon-box text-success" style="background-color: rgba(16, 185, 129, 0.1);">
+                                        <i class="bi bi-file-earmark-zip-fill"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="folder-card" style="cursor: pointer;" onclick="openFolder('match_reports', 'Actas de Partidos')">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="file-path-badge">/assets/match_reports/</span>
+                                        <h4 class="fw-bold mb-2 text-dark">Actas de Juegos</h4>
+                                        <p class="text-muted small mb-0">Formatos PDF individuales organizados por torneo.</p>
+                                    </div>
+                                    <div class="file-icon-box text-danger" style="background-color: rgba(239, 68, 68, 0.1);">
+                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card overflow-hidden shadow-sm fade-in" id="viewFiles" style="display: none; border-radius: 16px;">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-pro">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4 py-3" style="width: 40px;">
+                                            <input class="form-check-input" type="checkbox" id="selectAllFiles" onchange="toggleSelectAllFiles(this)">
+                                        </th>
+                                        <th class="py-3">Nombre del Archivo</th>
+                                        <th class="py-3">Tamaño</th>
+                                        <th class="py-3">Modificado el</th>
+                                        <th class="text-end pe-4 py-3">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableFiles"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="tab-pane fade" id="tab-users">
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <div>
@@ -295,6 +408,61 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <div class="pagination-container border-top" id="paginationUsers"></div>
                     </div>
                 </div>
+                
+                <div class="tab-pane fade" id="tab-venues">
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div>
+                            <h3 class="fw-bold mb-1">Canchas y Sedes</h3>
+                            <p class="text-muted mb-0">Administra los lugares de juego.</p>
+                        </div>
+                        <button class="btn btn-primary rounded-pill px-4 shadow" onclick="openModal('modalVenue')">
+                            <i class="bi bi-plus-lg me-2"></i>Nueva Sede
+                        </button>
+                    </div>
+                    <div class="card overflow-hidden">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Nombre de la Sede</th>
+                                        <th>Dirección / Ubicación</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableVenues"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-container border-top" id="paginationVenues"></div>
+                    </div>
+                </div>
+                
+                <div class="modal fade" id="modalVenue" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="formVenue" class="modal-content border-0 shadow-lg">
+            <input type="hidden" name="id" id="venue_id">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleVenue">Nueva Sede</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-floating mb-3">
+                    <input type="text" name="name" id="venue_name" class="form-control fw-bold" placeholder="Nombre" required>
+                    <label>Nombre de la Sede/Cancha</label>
+                </div>
+                
+                <div class="form-floating">
+                    <textarea name="address" id="venue_address" class="form-control" placeholder="Dirección" style="height: 100px"></textarea>
+                    <label>Dirección / Notas de ubicación</label>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4">Guardar Sede</button>
+            </div>
+        </form>
+    </div>
+</div>
 
             </div>
         </div>
@@ -321,7 +489,56 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     </div>
 </div>
 
-<div class="modal fade" id="modalTournament" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form id="formTournament" class="modal-content border-0 shadow-lg"><input type="hidden" name="id" id="tourn_id"><div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="titleTournament">Nuevo Torneo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="form-floating mb-3"><input type="text" name="name" id="tourn_name" class="form-control" placeholder="Nombre" required><label>Nombre del Torneo</label></div><div class="form-floating"><input type="text" name="category" id="tourn_cat" class="form-control" placeholder="Categoría"><label>Categoría</label></div></div><div class="modal-footer border-0 pt-0 pb-4 pe-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Guardar</button></div></form></div></div>
+<div class="modal fade" id="modalTournament" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg"> <form id="formTournament" class="modal-content border-0 shadow-lg" enctype="multipart/form-data">
+            <input type="hidden" name="id" id="tourn_id">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="titleTournament">Nuevo Torneo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3 bg-light rounded-3 border h-100">
+                            <div class="me-3">
+                                <img id="previewTournLogo" src="https://placehold.co/80?text=Logo" class="team-logo-table" style="width: 70px; height: 70px; object-fit: contain;">
+                            </div>
+                            <div class="flex-grow-1">
+                                <label class="form-label x-small text-muted fw-bold mb-1">LOGO DEL TORNEO</label>
+                                <input type="file" name="logo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this, 'previewTournLogo')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-3 bg-light rounded-3 border h-100">
+                            <div class="me-3">
+                                <img id="previewArbitroLogo" src="https://placehold.co/80?text=Ref" class="team-logo-table" style="width: 70px; height: 70px; object-fit: contain;">
+                            </div>
+                            <div class="flex-grow-1">
+                                <label class="form-label x-small text-muted fw-bold mb-1">LOGO ÁRBITRO / SPONSOR</label>
+                                <input type="file" name="arbitro_logo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this, 'previewArbitroLogo')">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="text" name="name" id="tourn_name" class="form-control" placeholder="Nombre" required>
+                    <label>Nombre del Torneo</label>
+                </div>
+                <div class="form-floating">
+                    <input type="text" name="category" id="tourn_cat" class="form-control" placeholder="Categoría">
+                    <label>Categoría (Ej. LIBRE, 1ra Fuerza)</label>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="modal fade" id="modalTeam" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form id="formTeam" class="modal-content border-0 shadow-lg" enctype="multipart/form-data"><input type="hidden" name="id" id="team_id"><div class="modal-header bg-light"><h5 class="modal-title fw-bold" id="titleTeam">Nuevo Equipo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="d-flex align-items-center mb-4 p-3 bg-light rounded-3 border"><div class="me-3"><img id="previewLogo" src="https://placehold.co/80?text=Logo" class="team-logo-table" style="width: 80px; height: 80px;"></div><div class="flex-grow-1"><label class="form-label small text-muted fw-bold mb-1">LOGO</label><input type="file" name="logo" class="form-control form-control-sm" accept="image/*" onchange="previewImage(this)"></div></div><div class="form-floating mb-3"><input type="text" name="name" id="team_name" class="form-control" placeholder="Nombre" required><label>Nombre del Equipo</label></div><div class="row g-2 mb-3"><div class="col-md-6"><div class="form-floating"><input type="text" name="shortName" id="team_short" class="form-control" placeholder="Abrev"><label>Abrev.</label></div></div><div class="col-md-6"><div class="form-floating"><input type="text" name="coachName" id="team_coach" class="form-control" placeholder="Coach"><label>Entrenador</label></div></div></div><div class="form-floating"><select name="tournament_id" id="selectTournamentForTeam" class="form-select"></select><label>Asignar Torneo</label></div></div><div class="modal-footer border-0 pt-0 pb-4 pe-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary px-4">Guardar</button></div></form></div></div>
 
@@ -481,7 +698,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         });
     });
 
-    function previewImage(input) { if (input.files && input.files[0]) { var reader = new FileReader(); reader.onload = function(e) { document.getElementById('previewLogo').src = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
+function previewImage(input, imgElementId = 'previewLogo') 
+{ if (input.files && input.files[0]) { var reader = new FileReader(); reader.onload = function(e) { document.getElementById(imgElementId).src = e.target.result; }; reader.readAsDataURL(input.files[0]); } }
 </script>
 </body>
 </html>

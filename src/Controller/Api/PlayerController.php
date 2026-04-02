@@ -3,7 +3,6 @@ class PlayerController extends BaseController {
     private $repo;
 
     public function __construct() {
-        // Instancia el repositorio automáticamente
         $this->repo = new PlayerRepository(Database::getInstance());
     }
     
@@ -13,7 +12,6 @@ class PlayerController extends BaseController {
             return null;
         }
 
-        // Crear una carpeta específica para el equipo (Ej: equipo_15)
         $folderName = 'equipo_' . (int)$teamId;
         $dir = __DIR__ . '/../../../assets/player_photos/' . $folderName . '/';
         
@@ -22,25 +20,41 @@ class PlayerController extends BaseController {
         return $filename ? ('../assets/player_photos/' . $folderName . '/' . $filename) : null;
     }
 
+    // --- NUEVO: Helper para borrar físicamente la foto del servidor ---
+    private function deleteOldPhoto(?string $photoUrl) {
+        if (!empty($photoUrl)) {
+            // Limpiamos la ruta relativa (../assets/...) para obtener la absoluta
+            $cleanPath = str_replace(['../', './'], '', $photoUrl);
+            $absolutePath = realpath(__DIR__ . '/../../../' . $cleanPath);
+            
+            // Si el archivo existe en el disco duro, lo eliminamos
+            if ($absolutePath && file_exists($absolutePath) && is_file($absolutePath)) {
+                unlink($absolutePath);
+            }
+        }
+    }
+
     public function addPlayer($data) {
-        // 1. Sanitizar la entrada para evitar XSS
         $cleanData = $this->sanitize($data);
 
-        // 2. Validar usando BaseController
-        // Según BD: teamId y name son requeridos. number es opcional.
         $this->validate($cleanData, [
             'teamId' => 'required|integer',
             'name'   => 'required',
             'number' => 'integer'
         ]);
 
-        // 3. Convertir a mayúsculas (soportando acentos y caracteres latinos)
         $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
         $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
 
+        // --- NUEVA VALIDACIÓN: ¿Existe el número de playera en el equipo? ---
+        // Solo validamos si enviaron un número mayor a 0
+        if ($number > 0 && $this->repo->playerNumberExistsInTeam((int)$cleanData['teamId'], $number)) {
+            Response::error("El número de playera '$number' ya está ocupado por otro jugador en este equipo.", 400);
+            return; // Detener ejecución
+        }
+
         try {
             $photoUrl = $this->processPhotoUpload($cleanData['teamId']);
-            // 4. Guardar en Base de Datos
             $newId = $this->repo->createPlayer(
                 (int)$cleanData['teamId'],
                 $upperName,
@@ -48,7 +62,6 @@ class PlayerController extends BaseController {
                 $photoUrl
             );
 
-            // 5. Respuesta de Éxito
             Response::success('Jugador agregado exitosamente', ['newId' => $newId], Response::HTTP_CREATED);
 
         } catch (Exception $e) {
@@ -58,18 +71,18 @@ class PlayerController extends BaseController {
     }
     
     public function update($data) {
-        // Verificamos quién está haciendo la petición
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    
-    $userRole = $_SESSION['admin_role'] ?? 'guest';
-    $userTeam = $_SESSION['team_id'] ?? null;
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        $userRole = $_SESSION['admin_role'] ?? 'guest';
+        $userTeam = $_SESSION['team_id'] ?? null;
 
-    // Si es un coach, verificamos que el teamId que intenta modificar sea el suyo
-    if ($userRole === 'coach') {
-        if ($data['teamId'] != $userTeam) {
-            Response::error("No tienes permisos para modificar jugadores de otros equipos.", 403);
+        if ($userRole === 'coach') {
+            if ($data['teamId'] != $userTeam) {
+                Response::error("No tienes permisos para modificar jugadores de otros equipos.", 403);
+                return;
+            }
         }
-    }
+        
         $cleanData = $this->sanitize($data);
 
         $this->validate($cleanData, [
@@ -82,15 +95,33 @@ class PlayerController extends BaseController {
         $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
         $number = isset($cleanData['number']) && $cleanData['number'] !== '' ? (int)$cleanData['number'] : 0;
 
+        // --- NUEVA VALIDACIÓN: ¿Existe el número de playera en el equipo? (Ignorando a sí mismo) ---
+        // Solo validamos si enviaron un número mayor a 0
+        if ($number > 0 && $this->repo->playerNumberExistsInTeam((int)$cleanData['teamId'], $number, (int)$cleanData['id'])) {
+            Response::error("El número de playera '$number' ya está ocupado por otro jugador en este equipo.", 400);
+            return;
+        }
+
         try {
-            $photoUrl = $this->processPhotoUpload($cleanData['teamId']);
+            // 1. Obtener la foto actual ANTES de hacer cualquier cambio
+            $oldPhotoUrl = $this->repo->getPhotoUrl((int)$cleanData['id']);
+            
+            // 2. Intentar subir la nueva foto (si el usuario envió una)
+            $newPhotoUrl = $this->processPhotoUpload($cleanData['teamId']);
+            
+            // 3. Actualizar la base de datos
             $this->repo->update(
                 (int)$cleanData['id'],
                 (int)$cleanData['teamId'],
                 $upperName,
                 $number,
-                $photoUrl
+                $newPhotoUrl
             );
+
+            // 4. Si se subió una NUEVA foto exitosamente, borramos la VIEJA del disco duro
+            if ($newPhotoUrl !== null && $oldPhotoUrl !== null) {
+                $this->deleteOldPhoto($oldPhotoUrl);
+            }
 
             Response::success('Jugador actualizado correctamente');
 
@@ -101,13 +132,22 @@ class PlayerController extends BaseController {
     }
     
     public function delete($id) {
-        // Envolvemos el ID en un array para poder validarlo con nuestro BaseController
         $this->validate(['id' => $id], [
             'id' => 'required|integer'
         ]);
 
         try {
+            // 1. Obtener la foto antes de borrar el registro
+            $oldPhotoUrl = $this->repo->getPhotoUrl((int)$id);
+            
+            // 2. Borrar de la base de datos
             $this->repo->delete((int)$id);
+            
+            // 3. Borrar el archivo físico si existía
+            if ($oldPhotoUrl !== null) {
+                $this->deleteOldPhoto($oldPhotoUrl);
+            }
+            
             Response::success('Jugador eliminado correctamente');
         } catch (Exception $e) {
             Logger::write("Error en delete Player: " . $e->getMessage());

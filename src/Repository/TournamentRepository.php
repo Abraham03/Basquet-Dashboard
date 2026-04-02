@@ -16,24 +16,39 @@ class TournamentRepository {
         return $result ?: null;
     }
     
-    public function createTournament(string $name, string $category): int {
-        Logger::write("TournamentRepository: Creando nuevo torneo $name");
-        
-        $stmt = $this->db->prepare("INSERT INTO tournaments (name, category) VALUES (?, ?)");
-        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
-        
-        // BUG SOLUCIONADO: Se cambió execute([array]) por bind_param()
-        $stmt->bind_param("ss", $name, $category);
+    public function createTournament(string $name, string $category, ?string $logoUrl = null, ?string $urlArbitro = null): int {
+        // Añadimos url_arbitro al INSERT
+        $stmt = $this->db->prepare("INSERT INTO tournaments (name, category, logo_url, url_arbitro) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $name, $category, $logoUrl, $urlArbitro);
         $stmt->execute();
-        
         return $this->db->insert_id;
     }
     
-    public function update(int $id, string $name, string $category): bool {
-        $stmt = $this->db->prepare("UPDATE tournaments SET name = ?, category = ? WHERE id = ?");
-        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+    public function update(int $id, string $name, string $category, ?string $logoUrl = null, ?string $urlArbitro = null): bool {
+        // Construimos la consulta dinámicamente según qué imágenes se envíen
+        $query = "UPDATE tournaments SET name = ?, category = ?";
+        $params = [$name, $category];
+        $types = "ss";
+
+        if ($logoUrl !== null) {
+            $query .= ", logo_url = ?";
+            $params[] = $logoUrl;
+            $types .= "s";
+        }
+
+        if ($urlArbitro !== null) {
+            $query .= ", url_arbitro = ?";
+            $params[] = $urlArbitro;
+            $types .= "s";
+        }
+
+        $query .= " WHERE id = ?";
+        $params[] = $id;
+        $types .= "i";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param($types, ...$params);
         
-        $stmt->bind_param("ssi", $name, $category, $id);
         return $stmt->execute();
     }
     
@@ -256,6 +271,14 @@ class TournamentRepository {
         $stmt->execute();
         $stmt->close();
         return true;
+    }
+    
+    // Elimina un registro único de fixture
+    public function deleteSingleFixture(int $fixtureId): void {
+        $stmt = $this->db->prepare("DELETE FROM fixtures WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB: " . $this->db->error);
+        $stmt->bind_param("i", $fixtureId);
+        $stmt->execute();
     }
     
     // Obtiene el ID de una jornada, si no existe, la crea

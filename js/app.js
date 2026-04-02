@@ -1,4 +1,4 @@
-const API_URL = 'https://basket.techsolutions.management/api.php';
+const API_URL = 'https://vanball.com.mx/api.php';
 let charts = {};
 
 // Autocompletar el año del Footer
@@ -8,9 +8,25 @@ document.addEventListener("DOMContentLoaded", () => {
     initThemeToggle(); 
     loadTournaments();
     loadDynamicGallery(); 
-    document.getElementById('tournamentSelect').addEventListener('change', (e) => loadDashboard(e.target.value));
+    document.getElementById('tournamentSelect').addEventListener('change', (e) => {
+    const id = e.target.value;
+    loadDashboard(id);
+    loadDynamicGallery(id); // <--- Cambia las fotos al cambiar el torneo
 });
+});
+function updateTechSolutionsLogo() {
+    const logoImg = document.getElementById('techSolutionsLogo');
+    if (!logoImg) return; // Por si no encuentra la imagen
 
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Si es modo oscuro, usamos el logo blanco (logo1.png). Si no, el oscuro (logo2.png)
+    if (isDark) {
+        logoImg.src = 'assets/imagenes/logo1.png';
+    } else {
+        logoImg.src = 'assets/imagenes/logo2.png';
+    }
+}
 // --- LÓGICA DEL MODO OSCURO ---
 function initThemeToggle() {
     const btn = document.getElementById('themeToggleBtn');
@@ -21,6 +37,9 @@ function initThemeToggle() {
         htmlElement.setAttribute('data-theme', 'dark');
         icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
     }
+    
+    // Asegurarnos de que el logo correcto se muestre al cargar la página
+    updateTechSolutionsLogo();
 
     btn.addEventListener('click', () => {
         if (htmlElement.getAttribute('data-theme') === 'dark') {
@@ -33,6 +52,7 @@ function initThemeToggle() {
             icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
         }
         updateChartTheme(); 
+        updateTechSolutionsLogo();
     });
 }
 
@@ -67,23 +87,36 @@ async function loadTournaments() {
         const select = document.getElementById('tournamentSelect');
         
         if (json.status === 'success' && json.data.length > 0) {
-            select.innerHTML = json.data.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-            loadDashboard(json.data[0].id);
+            // Llenamos el select con Nombre y Categoría
+            select.innerHTML = json.data.map(t => {
+                const categoryLabel = t.category ? ` (${t.category})` : '';
+                return `<option value="${t.id}">${t.name}${categoryLabel}</option>`;
+            }).join('');
+            
+            // VALIDACIÓN INICIAL: Cargamos el dashboard y la galería del primer torneo de la lista
+            const firstTournamentId = json.data[0].id;
+            loadDashboard(firstTournamentId);
+            loadDynamicGallery(firstTournamentId); // <--- Carga inicial de fotos
         } else {
             select.innerHTML = '<option disabled>No hay torneos activos</option>';
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Error al cargar lista de torneos:", e); 
+    }
 }
 
-async function loadDynamicGallery() {
+async function loadDynamicGallery(tournamentId) {
     try {
-        const res = await fetch(`${API_URL}?action=get_slider_images`);
+        // Consultamos al nuevo path que incluye el tournament_id
+        const res = await fetch(`${API_URL}?action=get_slider_images&tournament_id=${tournamentId}`);
         const json = await res.json();
         
+        const galleryContainer = document.getElementById('basketballGallery');
+        const indicators = document.getElementById('galleryIndicators');
+        const inner = document.getElementById('galleryInner');
+
         if (json.status === 'success' && json.data.length > 0) {
-            document.getElementById('basketballGallery').classList.remove('d-none');
-            const indicators = document.getElementById('galleryIndicators');
-            const inner = document.getElementById('galleryInner');
+            galleryContainer.classList.remove('d-none');
             
             indicators.innerHTML = '';
             const overlayHtml = '<div class="carousel-overlay"></div>';
@@ -92,19 +125,32 @@ async function loadDynamicGallery() {
             json.data.forEach((img, index) => {
                 const isActive = index === 0 ? 'active' : '';
                 indicators.innerHTML += `<button type="button" data-bs-target="#basketballGallery" data-bs-slide-to="${index}" class="${isActive}"></button>`;
+                
+                // Usamos img.url que ya viene con la ruta assets/imagenes/torneos/ID/slider/
                 slidesHtml += `
                     <div class="carousel-item ${isActive} h-100">
                         <div class="slide-content-wrapper">
-                            <img src="assets/imagenes/slider/${img.filename}" class="gallery-bg-blur" alt="bg blur">
-                            <img src="assets/imagenes/slider/${img.filename}" class="gallery-img-main" alt="Jugada ${index+1}">
+                            <img src="${img.url}" class="gallery-bg-blur" alt="bg blur">
+                            <img src="${img.url}" class="gallery-img-main" alt="Jugada ${index+1}">
                         </div>
                     </div>
                 `;
             });
             
             inner.innerHTML = overlayHtml + slidesHtml;
+            
+            // Reiniciar el carrusel de Bootstrap para que reconozca los nuevos elementos
+            const carousel = new bootstrap.Carousel(galleryContainer);
+            carousel.to(0);
+
+        } else {
+            // Si el torneo no tiene fotos, ocultamos el componente del slider
+            galleryContainer.classList.add('d-none');
         }
-    } catch (e) { console.error("Error cargando galería:", e); }
+    } catch (e) { 
+        console.error("Error cargando galería dinámica:", e);
+        document.getElementById('basketballGallery').classList.add('d-none');
+    }
 }
 
 async function loadDashboard(tournamentId) {
@@ -169,144 +215,220 @@ function getPlayerPhoto(name, photoUrl) {
     return photoUrl ? photoUrl.replace('../', '') : fallback;
 }
 
+// Variable global para guardar las jornadas disponibles
+let publicRoundsData = {};
+
 function renderFixture(rounds) {
-    const tabsContainer = document.getElementById('fixtureTabs');
     const contentContainer = document.getElementById('fixtureContent');
     const liveIndicator = document.getElementById('liveIndicator');
+    const roundSelect = document.getElementById('roundSelectPublic');
     
-    tabsContainer.innerHTML = '';
     contentContainer.innerHTML = '';
+    roundSelect.innerHTML = '';
+    publicRoundsData = rounds;
     let hasLiveGames = false;
 
     if (!rounds || Object.keys(rounds).length === 0) {
-        contentContainer.innerHTML = '<div class="text-center py-5"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>No hay partidos programados.</div>';
+        roundSelect.innerHTML = '<option value="">Sin Partidos</option>';
+        roundSelect.disabled = true;
+        contentContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-calendar-x mb-3 d-block"></i>
+                <h4 class="fw-bold text-dark">Sin partidos programados</h4>
+                <p class="fs-6 text-muted">El calendario de este torneo aún no ha sido publicado.</p>
+            </div>`;
         return;
     }
 
-    let activeRoundIndex = 0;
-    let index = 0;
+    roundSelect.disabled = false;
+    let activeRoundName = Object.keys(rounds)[0]; // Por defecto la primera
     let foundActive = false;
 
+    // Poblar el Dropdown y buscar partidos en vivo/pendientes
     for (const [roundName, matches] of Object.entries(rounds)) {
         if (matches.some(m => m.status === 'PLAYING')) hasLiveGames = true;
         if (!foundActive && matches.some(m => m.status !== 'FINISHED')) {
-            activeRoundIndex = index;
+            activeRoundName = roundName;
             foundActive = true;
         }
-        index++;
+        // Añadir al select
+        roundSelect.innerHTML += `<option value="${roundName}">${roundName}</option>`;
     }
     
     if (hasLiveGames) liveIndicator.classList.remove('d-none');
     else liveIndicator.classList.add('d-none');
 
-    let tabsHtml = '';
-    let panesHtml = '';
+    // Seleccionar la jornada activa en el Dropdown
+    roundSelect.value = activeRoundName;
+    
+    // Renderizar esa jornada
+    renderPublicMatches(activeRoundName);
+    
+    // Inicializar tooltips
+    setTimeout(() => {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }, 100);
+}
 
-    index = 0;
-    for (const [roundName, matches] of Object.entries(rounds)) {
-        const safeId = roundName.replace(/[^a-zA-Z0-9]/g, '_');
-        const isActive = index === activeRoundIndex;
-        const activeClass = isActive ? 'active' : '';
-        const showClass = isActive ? 'show active' : '';
+// Nueva función que se ejecuta al cambiar el Select
+function changePublicRound(roundName) {
+    renderPublicMatches(roundName);
+}
 
-        tabsHtml += `
-            <li class="nav-item" role="presentation">
-                <button class="nav-link ${activeClass}" id="tab-btn-${safeId}" data-bs-toggle="pill" data-bs-target="#tab_${safeId}" type="button" role="tab" aria-controls="tab_${safeId}" aria-selected="${isActive}">
-                    ${roundName}
-                </button>
-            </li>`;
+// Función que dibuja solo las tarjetas de la jornada seleccionada
+function renderPublicMatches(roundName) {
+    const contentContainer = document.getElementById('fixtureContent');
+    const matches = publicRoundsData[roundName];
+    
+    if(!matches) return;
 
-        let matchesHtml = matches.map(m => {
-            const dateStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleDateString('es-ES', {weekday:'short', day:'numeric', month:'short'}) : 'Sin definir';
-            const timeStr = m.scheduled_datetime ? new Date(m.scheduled_datetime).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}) : '';
+    let matchesHtml = matches.map(m => {
+        // Formatear Fecha y Hora
+        let dateDisplay = '<span style="font-size:0.75rem">Por definir</span>';
+        let timeDisplay = '';
+        
+        if(m.scheduled_datetime) {
+            const date = new Date(m.scheduled_datetime);
+            const day = date.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' });
+            const time = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
             
-            let statusBadge = '';
-            let pdfButton = '';
+            dateDisplay = `<span><i class="bi bi-calendar3 me-1"></i>${day}</span>`;
+            timeDisplay = `<div class="match-time mt-1">${time} hrs</div>`;
+        }
+
+        // Logos con Fallback
+        const logoA = m.logo_a ? `${m.logo_a.replace('../', '')}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(m.team_a)}&background=f1f5f9&color=64748b`;
+        const logoB = m.logo_b ? `${m.logo_b.replace('../', '')}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(m.team_b)}&background=f1f5f9&color=64748b`;
+
+        // Estado del Partido (Badge)
+        let statusBadge = '<span class="match-status status-scheduled">Programado</span>';
+        let isFinished = false;
+
+        if(m.status === 'FINISHED') { statusBadge = '<span class="match-status status-finished">Finalizado</span>'; isFinished = true; }
+        if(m.status === 'PLAYING') { statusBadge = '<span class="match-status status-playing">En Juego</span>'; isFinished = true; }
+        if(m.status === 'CANCELLED') { statusBadge = '<span class="match-status bg-danger text-white border-danger">Cancelado</span>'; }
+
+        // Lógica de Marcador y Ganador
+        let centerContent = `<div class="vs-text">VS</div>${timeDisplay}`;
+        let winnerAClass = '';
+        let winnerBClass = '';
+
+        if(isFinished || m.status === 'PLAYING') {
+            const scA = m.score_a !== null ? parseInt(m.score_a) : 0;
+            const scB = m.score_b !== null ? parseInt(m.score_b) : 0;
             
-            if(m.status === 'PLAYING') {
-                statusBadge = '<div class="live-badge">EN VIVO</div>';
-            } else if(m.status === 'FINISHED') {
-                statusBadge = '<span class="status-badge-neutral">Final</span>';
-                if (m.pdf_url) {
-                    pdfButton = `<a href="${m.pdf_url.replace('../', '')}" target="_blank" class="btn btn-sm btn-outline-danger mt-3 w-100 fw-bold"><i class="bi bi-file-earmark-pdf-fill me-1"></i> Ver Acta Oficial</a>`;
-                }
-            } else {
-                statusBadge = `<span class="status-badge-neutral"><i class="bi bi-clock me-1"></i>${timeStr || 'Pendiente'}</span>`;
+            if (isFinished) {
+                if (scA > scB) winnerAClass = 'winner';
+                if (scB > scA) winnerBClass = 'winner';
             }
 
-            let scoreA = '';
-            let scoreB = '';
-            let winnerAClass = '';
-            let winnerBClass = '';
+            centerContent = `
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                    <span class="score-display ${winnerAClass}">${scA}</span>
+                    <span class="text-muted fs-6">-</span>
+                    <span class="score-display ${winnerBClass}">${scB}</span>
+                </div>
+                ${m.status === 'PLAYING' ? '<div class="live-badge mt-1"><span class="spinner-grow spinner-grow-sm me-1" style="width: 0.3rem; height: 0.3rem;"></span>En Vivo</div>' : timeDisplay}
+            `;
+        }
 
-            if (m.status === 'FINISHED' || m.status === 'PLAYING') {
-                scoreA = m.score_a !== null ? m.score_a : '0';
-                scoreB = m.score_b !== null ? m.score_b : '0';
+        // Botón PDF (Acta)
+        let pdfButton = '';
+        if(m.pdf_url && isFinished) {
+            pdfButton = `<a href="${m.pdf_url.replace('../', '')}" target="_blank" class="btn-pdf" data-bs-toggle="tooltip" title="Ver Acta Oficial"><i class="bi bi-file-earmark-pdf-fill"></i></a>`;
+        }
+
+        // Render de la Tarjeta Completa
+        return `
+        <div class="col-md-6 col-xl-4 mb-4">
+            <div class="match-card" data-status="${m.status}">
+                ${statusBadge}
                 
-                if (m.status === 'FINISHED') {
-                    if (parseInt(scoreA) > parseInt(scoreB)) winnerAClass = 'winner';
-                    if (parseInt(scoreB) > parseInt(scoreA)) winnerBClass = 'winner';
-                }
-            }
+                <div class="d-flex align-items-center justify-content-between p-3 pb-2 mt-2">
+                    <div class="team-container">
+                        <img src="${logoA}" class="team-logo shadow-sm" onerror="this.src='https://placehold.co/60x60?text=A'">
+                        <div class="team-name-card ${winnerAClass}" title="${m.team_a}">${m.team_a}</div>
+                    </div>
 
-            return `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="match-card" data-status="${m.status}">
-                    <div class="status-indicator"></div>
-                    <div class="match-card-body">
-                        <div class="team-row">
-                            <div class="team-info">
-                                <img src="${m.logo_a ? m.logo_a.replace('../', '') : `https://ui-avatars.com/api/?name=${m.team_a}&background=random&color=fff`}" class="team-logo-sm">
-                                <span class="team-name-card ${winnerAClass}">${m.team_a}</span>
-                            </div>
-                            <span class="team-score ${winnerAClass}">${scoreA}</span> 
-                        </div>
-                        
-                        <div class="team-row mb-0">
-                            <div class="team-info">
-                                <img src="${m.logo_b ? m.logo_b.replace('../', '') : `https://ui-avatars.com/api/?name=${m.team_b}&background=random&color=fff`}" class="team-logo-sm">
-                                <span class="team-name-card ${winnerBClass}">${m.team_b}</span>
-                            </div>
-                            <span class="team-score ${winnerBClass}">${scoreB}</span> 
-                        </div>
+                    <div class="match-info">
+                        ${centerContent}
+                    </div>
 
-                        <div class="match-meta">
-                            <div><i class="bi bi-calendar-event me-1"></i>${dateStr}</div>
-                            <div>${statusBadge}</div>
-                            <div><i class="bi bi-geo-alt me-1"></i>${m.venue_name || 'Sede Local'}</div>
+                    <div class="team-container">
+                        <img src="${logoB}" class="team-logo shadow-sm" onerror="this.src='https://placehold.co/60x60?text=B'">
+                        <div class="team-name-card ${winnerBClass}" title="${m.team_b}">${m.team_b}</div>
+                    </div>
+                </div>
+
+                <div class="match-footer">
+                    <div class="d-flex align-items-center gap-3">
+                        <div title="Fecha">${dateDisplay}</div>
+                        <div class="text-truncate" style="max-width: 140px;" title="Cancha/Sede">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>${m.venue_name || 'Sede por definir'}
                         </div>
-                        
+                    </div>
+                    <div>
                         ${pdfButton}
                     </div>
                 </div>
-            </div>`;
-        }).join('');
+            </div>
+        </div>`;
+    }).join('');
 
-        panesHtml += `
-            <div class="tab-pane fade ${showClass}" id="tab_${safeId}" role="tabpanel" aria-labelledby="tab-btn-${safeId}">
-                <div class="row g-3">${matchesHtml}</div>
-            </div>`;
-        
-        index++;
-    }
+    contentContainer.innerHTML = `
+        <div class="fade show active">
+            <div class="row g-2">${matchesHtml}</div>
+        </div>`;
+}
 
-    tabsContainer.innerHTML = tabsHtml;
-    contentContainer.innerHTML = panesHtml;
+// Opcional: Arreglo Rápido para el Chart.js
+// Evita el error al cargar un torneo sin partidos
+function renderPeriodsChart(data) {
+    const ctx = document.getElementById('periodsChart').getContext('2d');
+    if (charts.periods) charts.periods.destroy();
+    
+    // Si no hay datos, crear un array en ceros para evitar que la gráfica falle
+    const chartData = (data && data.length > 0) ? data : [{period: 1, total: 0}, {period: 2, total: 0}, {period: 3, total: 0}, {period: 4, total: 0}];
+
+    charts.periods = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.map(p => 'Q' + p.period),
+            datasets: [{
+                label: 'Intensidad de Juego',
+                data: chartData.map(p => p.total),
+                borderColor: '#10B981',
+                borderWidth: 3,
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#10B981',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false, 
+            plugins: { legend: { display: false }, tooltip: { intersect: false, mode: 'index' } },
+            scales: { y: { beginAtZero: true, grid: { borderDash: [4,4] } } }
+        }
+    });
 }
 
 function renderStandings(teams, tournamentId) {
     const tbody = document.getElementById('standingsBody');
-    // Si no pasamos tournamentId desde loadDashboard, lo tomamos del select
     const tId = tournamentId || document.getElementById('tournamentSelect').value;
 
     tbody.innerHTML = teams.map((t, i) => {
         const isFirst = i === 0 ? 'color: var(--primary); font-size: 1.1rem;' : '';
-        const j = parseInt(t.w) + parseInt(t.l) + parseInt(t.d || 0);
-        const safeTeamName = t.team.replace(/'/g, "\\'"); // Escapar comillas para el onclick
-        
-        // CORRECCIÓN AQUÍ: Nos aseguramos de mandar t.id al onclick
+        const safeTeamName = t.team.replace(/'/g, "\\'"); 
+        const diff = (parseInt(t.pts_favor || 0) - parseInt(t.pts_contra || 0));
+
         return `
-        <tr class="clickable-row" onclick="showTeamDetails(${tId}, ${t.id}, '${safeTeamName}')" title="Ver plantilla y estadísticas">
+        <tr class="clickable-row" onclick="showTeamDetails(${tId}, ${t.id}, '${safeTeamName}')">
             <td class="fw-bold" style="${isFirst}">${i + 1}</td>
             <td>
                 <div class="d-flex align-items-center">
@@ -314,17 +436,17 @@ function renderStandings(teams, tournamentId) {
                     <span class="fw-bold ms-2">${t.team}</span>
                 </div>
             </td>
-            <td class="text-center text-muted fw-bold">${j}</td>
-            <td class="text-center fw-bold text-success">${t.w}</td>
-            <td class="text-center fw-bold text-muted">${t.d || 0}</td>
-            <td class="text-center fw-bold text-danger">${t.l}</td>
-            <td class="text-center fw-medium text-muted" style="font-size: 0.85rem;">
-                ${t.pts_favor} : ${t.pts_contra}
+            <td class="text-center text-muted fw-bold">${t.j}</td>
+            <td class="text-center fw-bold text-success">${t.jg}</td>
+            <td class="text-center fw-bold text-warning">${t.jd || 0}</td>
+            <td class="text-center fw-bold text-danger">${t.jp}</td>
+            <td class="text-center fw-medium text-muted small">
+                ${t.pts_favor || 0} : ${t.pts_contra || 0}
             </td>
-            <td class="text-center fw-bold ${t.point_diff > 0 ? 'text-success' : (t.point_diff < 0 ? 'text-danger' : 'text-muted')}">
-                ${t.point_diff > 0 ? '+' : ''}${t.point_diff}
+            <td class="text-center fw-bold ${diff > 0 ? 'text-success' : 'text-danger'}">
+                ${diff > 0 ? '+' : ''}${diff}
             </td>
-            <td class="text-center fw-bold fs-5" style="color: var(--primary); background: rgba(255, 87, 34, 0.05); border-radius: 0 8px 8px 0;">${t.pts}</td>
+            <td class="text-center fw-bold fs-5" style="color: var(--primary); background: rgba(255, 87, 34, 0.05);">${t.pts}</td>
         </tr>
     `}).join('');
 }

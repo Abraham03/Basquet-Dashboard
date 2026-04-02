@@ -20,42 +20,59 @@ class TournamentController extends BaseController {
         }
     }
 
-    public function create($data) {
+   public function create($data) {
         $cleanData = $this->sanitize($data);
-        $this->validate($cleanData, [
-            'name' => 'required'
-        ]);
-
-        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
-        $upperCategory = !empty($cleanData['category']) ? mb_strtoupper($cleanData['category'], 'UTF-8') : 'LIBRE';
+        $this->validate($cleanData, ['name' => 'required']);
 
         try {
-            $newId = $this->repo->createTournament($upperName, $upperCategory);
-            // CORRECCIÓN CLAVE: Envolvemos en un array como pide Response.php
+            // Usamos tu clase FileUploader para ambas imágenes
+            $logoUrl = $this->processUpload('logo', 'tourn_');
+            $urlArbitro = $this->processUpload('arbitro_logo', 'ref_');
+
+            $newId = $this->repo->createTournament(
+                mb_strtoupper($cleanData['name'], 'UTF-8'),
+                mb_strtoupper($cleanData['category'] ?? 'LIBRE', 'UTF-8'),
+                $logoUrl,
+                $urlArbitro
+            );
             Response::success('Torneo creado exitosamente', ['newId' => $newId], Response::HTTP_CREATED);
         } catch (Exception $e) {
-            Logger::write("Error en create Tournament: " . $e->getMessage());
-            Response::error('No se pudo crear el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     
     public function update($data) {
         $cleanData = $this->sanitize($data);
-        $this->validate($cleanData, [
-            'id'   => 'required|integer',
-            'name' => 'required'
-        ]);
-
-        $upperName = mb_strtoupper($cleanData['name'], 'UTF-8');
-        $upperCategory = !empty($cleanData['category']) ? mb_strtoupper($cleanData['category'], 'UTF-8') : 'LIBRE';
+        $this->validate($cleanData, ['id' => 'required|integer', 'name' => 'required']);
 
         try {
-            $this->repo->update((int)$cleanData['id'], $upperName, $upperCategory);
+            $logoUrl = $this->processUpload('logo', 'tourn_');
+            $urlArbitro = $this->processUpload('arbitro_logo', 'ref_');
+
+            $this->repo->update(
+                (int)$cleanData['id'],
+                mb_strtoupper($cleanData['name'], 'UTF-8'),
+                mb_strtoupper($cleanData['category'] ?? 'LIBRE', 'UTF-8'),
+                $logoUrl,
+                $urlArbitro
+            );
             Response::success('Torneo actualizado correctamente');
         } catch (Exception $e) {
-            Logger::write("Error en update Tournament: " . $e->getMessage());
-            Response::error('No se pudo actualizar el torneo', Response::HTTP_INTERNAL_SERVER_ERROR);
+            Response::error($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    /**
+     * Helper que utiliza tu clase FileUploader
+     */
+    private function processUpload($fieldName, $prefix) {
+        if (isset($_FILES[$fieldName]) && $_FILES[$fieldName]['error'] === UPLOAD_ERR_OK) {
+            $dir = __DIR__ . '/../../../assets/tournament_logo/';
+            // Llamada a tu clase FileUploader
+            $filename = FileUploader::uploadImage($_FILES[$fieldName], $dir, $prefix);
+            return $filename ? '../assets/tournament_logo/' . $filename : null;
+        }
+        return null;
     }
     
     public function delete($id) {
@@ -206,6 +223,20 @@ class TournamentController extends BaseController {
         } catch (Exception $e) {
             Logger::write("Error getTeamSchedulingStatus: " . $e->getMessage());
             Response::error('Error interno al obtener estado de los equipos', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    // Elimina un solo partido programado
+    public function deleteSingleFixture($input) {
+        $fixtureId = $input['fixture_id'] ?? null;
+        $this->validate(['fixture_id' => $fixtureId], ['fixture_id' => 'required|integer']);
+
+        try {
+            $this->repo->deleteSingleFixture((int)$fixtureId);
+            Response::success('Partido programado eliminado correctamente');
+        } catch (Exception $e) {
+            Logger::write("Error en deleteSingleFixture: " . $e->getMessage());
+            Response::error('Error al eliminar partido', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
     

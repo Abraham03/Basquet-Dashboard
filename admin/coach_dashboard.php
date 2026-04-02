@@ -28,7 +28,7 @@ if ($team_id === 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso Denegado | Basket Pro</title>
     
-    <link rel="icon" type="image/ico" href="../assets/imagenes/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/imagenes/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -69,6 +69,7 @@ if ($team_id === 0) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Equipo | Basket Pro</title>
     
+    <link rel="icon" type="image/x-icon" href="/assets/imagenes/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -473,6 +474,13 @@ if ($team_id === 0) {
         // 2. Guardar Jugador
         document.getElementById('formPlayer').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Estado de carga para el botón de jugador ---
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+            
             const formData = new FormData(e.target);
             const isUpdate = formData.get('id');
             const action = isUpdate ? 'update_player' : 'add_player';
@@ -488,7 +496,13 @@ if ($team_id === 0) {
                 } else {
                     Swal.fire('Error', json.message, 'error');
                 }
-            } catch (err) { Swal.fire('Error', 'Fallo al procesar jugador.', 'error'); }
+            } catch (err) { Swal.fire('Error', 'Fallo al procesar jugador.', 'error'); 
+                
+            } finally {
+                // Restaurar el botón pase lo que pase ---
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            } 
         });
     }
 
