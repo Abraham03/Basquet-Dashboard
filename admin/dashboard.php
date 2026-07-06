@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basket Pro | Admin Dashboard</title>
+    <title>VanBall | Admin Dashboard</title>
     
     <link rel="icon" type="image/ico" href="../assets/imagenes/favicon.ico">
     
@@ -165,7 +165,10 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 <div id="wrapper">
     <div id="sidebar-wrapper">
         <div class="sidebar-header">
-            <span class="sidebar-brand"><i class="bi bi-basket2-fill text-warning me-2"></i>BASKET PRO</span>
+            <span class="sidebar-brand d-flex align-items-center">
+                <img src="../assets/imagenes/Logo.png" alt="Logo" style="height: 32px; width: auto; margin-right: 12px;">
+                VanBall
+            </span>
             <button class="btn btn-link text-white d-md-none p-0" onclick="toggleMenu()"><i class="bi bi-x-lg fs-4"></i></button>
         </div>
         <div class="nav flex-column mt-3">
@@ -265,7 +268,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="card overflow-hidden">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
-                                <thead><tr><th class="ps-4">ID</th><th>Equipo</th><th>Coach</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                                <thead><tr><th class="ps-4">ID</th><th>Equipo</th><th>Coach</th><th>Torneo</th><th class="text-end pe-4">Acciones</th></tr></thead>
                                 <tbody id="tableTeams"></tbody>
                             </table>
                         </div>
@@ -467,22 +470,21 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             </div>
         </div>
 
-        <footer class="footer-admin">
+<footer class="footer-admin py-4 border-top mt-auto">
             <div class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">
-                        <i class="bi bi-basket2-fill text-primary me-1"></i> Basket Pro
-                    </span>
-                    <span class="text-muted" style="font-size: 0.85rem;">&copy; <?php echo date('Y'); ?></span>
+                
+                <div class="text-muted" style="font-size: 0.85rem;">
+                    &copy; <?php echo date('Y'); ?> Todos los derechos reservados.
                 </div>
 
-                <div class="d-flex align-items-center gap-4">
-                    <div class="text-muted" style="font-size: 0.8rem;">Versión 1.2</div>
-                    <div style="width: 1px; height: 16px; background-color: #e2e8f0;"></div>
-                    <a href="https://techsolutions.management/" class="footer-dev-badge" target="_blank" rel="noopener">
-                        <i class="bi bi-code-slash text-primary"></i> TechSolutions
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted" style="font-size: 0.85rem;">Desarrollado por</span>
+                    <a href="https://techsolutions.management/" class="d-flex align-items-center text-decoration-none" target="_blank" rel="noopener" style="opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
+                        <img id="techSolutionsLogo" src="../assets/imagenes/logo2.png" alt="Logo TechSolutions" style="height: 22px; width: auto; margin-right: 6px;">
+                        <span style="color: #212529; font-weight: 700; font-size: 0.95rem; letter-spacing: -0.3px;">TechSolutions</span>
                     </a>
                 </div>
+
             </div>
         </footer>
 

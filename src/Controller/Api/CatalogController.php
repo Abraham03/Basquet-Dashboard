@@ -8,7 +8,8 @@ class CatalogController {
     }
     
     public function getTournamentsList() {
-        $data = $this->repo->getTournamentsList();
+        $publicOnly = isset($_GET['public_only']) && $_GET['public_only'] == '1';
+        $data = $this->repo->getTournamentsList($publicOnly);
         Response::json(['status' => 'success', 'data' => $data]);
     }
 

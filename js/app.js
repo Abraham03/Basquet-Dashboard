@@ -82,7 +82,7 @@ function updateChartTheme() {
 // --- CARGA DE DATOS ---
 async function loadTournaments() {
     try {
-        const res = await fetch(`${API_URL}?action=get_tournaments_list`);
+        const res = await fetch(`${API_URL}?action=get_tournaments_list&public_only=1`);
         const json = await res.json();
         const select = document.getElementById('tournamentSelect');
         
@@ -93,10 +93,22 @@ async function loadTournaments() {
                 return `<option value="${t.id}">${t.name}${categoryLabel}</option>`;
             }).join('');
             
-            // VALIDACIÓN INICIAL: Cargamos el dashboard y la galería del primer torneo de la lista
-            const firstTournamentId = json.data[0].id;
-            loadDashboard(firstTournamentId);
-            loadDynamicGallery(firstTournamentId); // <--- Carga inicial de fotos
+            // --- LÓGICA CLAVE: Búsqueda del Torneo por Defecto ---
+            let defaultTournament = json.data.find(t => t.is_default == 1);
+            
+            // Si el admin no ha marcado ninguno con la estrella, usamos el primero como respaldo
+            if (!defaultTournament) {
+                defaultTournament = json.data[0];
+            }
+
+            const targetId = defaultTournament.id;
+
+            // Actualizamos el dropdown visualmente para que muestre el elegido
+            select.value = targetId;
+            
+            // Cargamos la data del torneo elegido
+            loadDashboard(targetId);
+            loadDynamicGallery(targetId); 
         } else {
             select.innerHTML = '<option disabled>No hay torneos activos</option>';
         }
@@ -104,7 +116,6 @@ async function loadTournaments() {
         console.error("Error al cargar lista de torneos:", e); 
     }
 }
-
 async function loadDynamicGallery(tournamentId) {
     try {
         // Consultamos al nuevo path que incluye el tournament_id
@@ -241,16 +252,42 @@ function renderFixture(rounds) {
     }
 
     roundSelect.disabled = false;
-    let activeRoundName = Object.keys(rounds)[0]; // Por defecto la primera
-    let foundActive = false;
+    
+    // 1. Extraer y ordenar las jornadas numéricamente
+    const sortedRoundKeys = Object.keys(rounds).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+        return numA - numB;
+    });
+    
+    // =========================================================
+    // --- NUEVO: CALCULAR NÚMERO DE ENFRENTAMIENTOS ---
+    // =========================================================
+    let pairCounts = {};
+    for (const roundName of sortedRoundKeys) {
+        for (let m of publicRoundsData[roundName]) {
+            let id1 = parseInt(m.team_a_id) || 0;
+            let id2 = parseInt(m.team_b_id) || 0;
+            
+            // Ordenamos los IDs para que "A vs B" y "B vs A" cuenten igual
+            let minId = Math.min(id1, id2);
+            let maxId = Math.max(id1, id2);
+            let pairKey = `${minId}_${maxId}`;
 
-    // Poblar el Dropdown y buscar partidos en vivo/pendientes
-    for (const [roundName, matches] of Object.entries(rounds)) {
-        if (matches.some(m => m.status === 'PLAYING')) hasLiveGames = true;
-        if (!foundActive && matches.some(m => m.status !== 'FINISHED')) {
-            activeRoundName = roundName;
-            foundActive = true;
+            pairCounts[pairKey] = (pairCounts[pairKey] || 0) + 1;
+            m.encounter_number = pairCounts[pairKey]; // Guardamos el # en el objeto
         }
+    }
+    // =========================================================
+
+    // 2. Establecer SIEMPRE la última jornada como la activa
+    let activeRoundName = sortedRoundKeys[sortedRoundKeys.length - 1];
+
+    // 3. Poblar el Dropdown ordenado y buscar si hay partidos en vivo en el torneo
+    for (const roundName of sortedRoundKeys) {
+        const matches = rounds[roundName];
+        if (matches.some(m => m.status === 'PLAYING')) hasLiveGames = true;
+        
         // Añadir al select
         roundSelect.innerHTML += `<option value="${roundName}">${roundName}</option>`;
     }
@@ -308,9 +345,22 @@ function renderPublicMatches(roundName) {
         if(m.status === 'FINISHED') { statusBadge = '<span class="match-status status-finished">Finalizado</span>'; isFinished = true; }
         if(m.status === 'PLAYING') { statusBadge = '<span class="match-status status-playing">En Juego</span>'; isFinished = true; }
         if(m.status === 'CANCELLED') { statusBadge = '<span class="match-status bg-danger text-white border-danger">Cancelado</span>'; }
+        
+        // =========================================================
+        // --- NUEVO: ETIQUETA TEXTUAL DEL ENFRENTAMIENTO ---
+        // =========================================================
+        let encNum = m.encounter_number || 1;
+        let encText = encNum === 1 ? '1er Encuentro' :
+                      encNum === 2 ? '2do Encuentro' :
+                      encNum === 3 ? '3er Encuentro' :
+                      encNum === 4 ? '4to Encuentro' :
+                      encNum + 'º Encuentro';
+        
+        let encounterHtml = `<div class="text-center fw-bold mb-1" style="font-size: 0.65rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">${encText}</div>`;
+        // =========================================================
 
         // Lógica de Marcador y Ganador
-        let centerContent = `<div class="vs-text">VS</div>${timeDisplay}`;
+        let centerContent = `${encounterHtml}<div class="vs-text">VS</div>${timeDisplay}`;
         let winnerAClass = '';
         let winnerBClass = '';
 
@@ -324,6 +374,7 @@ function renderPublicMatches(roundName) {
             }
 
             centerContent = `
+                ${encounterHtml}
                 <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
                     <span class="score-display ${winnerAClass}">${scA}</span>
                     <span class="text-muted fs-6">-</span>
@@ -486,7 +537,7 @@ async function showTeamDetails(tournamentId, teamId, teamName) {
                     <td class="fw-bold text-muted text-center">${p.default_number}</td>
                     <td class="fw-bold">
                         <div class="d-flex align-items-center">
-                            <img src="${photoSrc}" onerror="this.src='${fallbackSrc}'" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-right: 10px; border: 1px solid var(--border-color);">
+                            <img src="${photoSrc}" onerror="this.src='${fallbackSrc}'" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-right: 10px; border: 1px solid var(--border-color); cursor: pointer;" onclick="showPlayerPhoto('${photoSrc}', '${p.name.replace(/'/g, "\\'")}')" title="Ver foto">
                             ${p.name}
                         </div>
                     </td>
@@ -537,7 +588,7 @@ function renderPlayerList(containerId, players, valueKey, label) {
             </div>
             
             <div class="position-relative me-3">
-                <img src="${photoSrc}" class="player-avatar" alt="${p.name}" onerror="this.src='${fallbackSrc}'">
+                <img src="${photoSrc}" class="player-avatar" alt="${p.name}" onerror="this.src='${fallbackSrc}'" style="cursor: pointer;" onclick="showPlayerPhoto('${photoSrc}', '${p.name.replace(/'/g, "\\'")}')" title="Ver foto">
                 ${index === 0 ? `<span class="player-rank-badge shadow-sm ${badgeBg}"><i class="bi bi-star-fill" style="font-size: 0.5rem;"></i></span>` : ''}
             </div>
             
@@ -563,6 +614,21 @@ function renderPlayerList(containerId, players, valueKey, label) {
         </div>
         `;
     }).join('');
+}
+
+// --- FUNCIÓN PARA MOSTRAR FOTO AMPLIADA ---
+function showPlayerPhoto(photoUrl, playerName) {
+    // 1. Asignar la imagen y el nombre
+    document.getElementById('enlargedPlayerPhoto').src = photoUrl;
+    document.getElementById('enlargedPlayerName').innerText = playerName;
+    
+    // 2. Abrir el modal de Bootstrap
+    const modalEl = document.getElementById('playerPhotoModal');
+    let modal = bootstrap.Modal.getInstance(modalEl);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalEl);
+    }
+    modal.show();
 }
 
 function renderDefenseTable(teams) {

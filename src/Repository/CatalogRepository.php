@@ -13,7 +13,7 @@ class CatalogRepository {
     
 
     public function getSyncData(int $tournamentId): array {
-        Logger::write("CatalogRepository: Obteniendo datos de sincronización. Torneo ID: $tournamentId");
+        //Logger::write("CatalogRepository: Obteniendo datos de sincronización. Torneo ID: $tournamentId");
         
         $teams = [];
         $players = [];
@@ -125,7 +125,7 @@ class CatalogRepository {
      * @return array Array con torneos, sedes, equipos y jugadores.
      */
     public function getAllCatalogs(): array {
-         Logger::write("CatalogRepository: Obteniendo todos los catálogos");
+         //Logger::write("CatalogRepository: Obteniendo todos los catálogos");
         return [
             // Solo torneos activos
             'tournaments' => $this->fetchAll("SELECT * FROM tournaments WHERE status='ACTIVE'"),
@@ -143,7 +143,7 @@ class CatalogRepository {
      * Filtra equipos y jugadores usando la tabla intermedia tournament_teams.
      */
     public function getTournamentData(int $tournamentId): array {
-        Logger::write("CatalogRepository: Obteniendo datos del torneo ID: $tournamentId");
+        //Logger::write("CatalogRepository: Obteniendo datos del torneo ID: $tournamentId");
         return [
             // 1. Partidos solo de este torneo
             'matches' => $this->fetchAll(
@@ -178,8 +178,13 @@ class CatalogRepository {
     }
     
     // 1. Solo lista de torneos (Para el select del dashboard)
-    public function getTournamentsList(): array {
-        return $this->fetchAll("SELECT * FROM tournaments ORDER BY id DESC");
+    public function getTournamentsList($publicOnly = false): array {
+        $sql = "SELECT * FROM tournaments";
+        if ($publicOnly) {
+            $sql .= " WHERE is_public = 1";
+        }
+        $sql .= " ORDER BY id DESC";
+        return $this->fetchAll($sql);
     }
 
     // 2. Datos filtrados por torneo (Para las tablas del dashboard)

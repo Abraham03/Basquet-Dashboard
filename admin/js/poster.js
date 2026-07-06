@@ -91,48 +91,54 @@ document.addEventListener("DOMContentLoaded", () => {
         flyerCanvas.addEventListener('touchstart', handleDragStart, { passive: true });
     }
 
-    // D. Funciones de Arrastre con compensación de Zoom
+    // D. Funciones de Arrastre (Con cálculo matemático de Zoom y Porcentajes)
+    // D. Funciones de Arrastre (Simplificado y a prueba de saltos)
     function initDrag(element, e) {
         dragElement = element;
         
-        // Obtener zoom actual
-        const transformStr = flyerCanvas.style.transform || '';
-        const match = transformStr.match(/scale\(([^)]+)\)/);
-        const zoomFactor = match ? parseFloat(match[1]) : 1;
+        // Ya no calculamos la posición usando la pantalla (getBoundingClientRect)
+        // Leemos directamente el porcentaje actual que tiene el elemento en su CSS
+        let currentLeft = parseFloat(dragElement.style.left);
+        let currentTop = parseFloat(dragElement.style.top);
 
-        // Convertir translate a pixeles absolutos para evitar saltos
-        if(dragElement.style.transform.includes('translate')) {
-            const rect = dragElement.getBoundingClientRect();
-            const parentRect = flyerCanvas.getBoundingClientRect();
-            dragElement.style.transform = 'none'; 
-            
-            dragElement.style.left = ((rect.left - parentRect.left) / zoomFactor) + 'px';
-            dragElement.style.top = ((rect.top - parentRect.top) / zoomFactor) + 'px';
-        }
+        // Por seguridad, si por alguna razón no tiene porcentaje aún, asume el centro
+        if (isNaN(currentLeft)) currentLeft = 50;
+        if (isNaN(currentTop)) currentTop = 50;
+
+        // Nos aseguramos de mantener el anclaje perfecto
+        dragElement.style.transform = 'translate(-50%, -50%)'; 
         
         const pos = getPointerPos(e);
         startX = pos.x;
         startY = pos.y;
-        initialLeft = parseFloat(dragElement.style.left) || 0;
-        initialTop = parseFloat(dragElement.style.top) || 0;
+        
+        // Guardamos las coordenadas iniciales en porcentaje
+        initialLeft = currentLeft;
+        initialTop = currentTop;
     }
 
     // MOVIMIENTO DEL ARRASTRE (Mousemove / Touchmove)
     function handleDragMove(e) {
         if (dragElement && !dragElement.classList.contains('text-typing')) {
-            // Evitar que la pantalla haga scroll mientras arrastramos un elemento
+            // Evitar que la pantalla haga scroll mientras arrastramos en móvil
             if (e.type === 'touchmove') e.preventDefault(); 
 
-            const transformStr = flyerCanvas.style.transform || '';
-            const match = transformStr.match(/scale\(([^)]+)\)/);
-            const zoomFactor = match ? parseFloat(match[1]) : 1;
+            const parentRect = flyerCanvas.getBoundingClientRect();
+            const zoomFactor = parentRect.width / 600;
 
             const pos = getPointerPos(e);
-            const dx = (pos.x - startX) / zoomFactor;
-            const dy = (pos.y - startY) / zoomFactor;
             
-            dragElement.style.left = (initialLeft + dx) + 'px';
-            dragElement.style.top = (initialTop + dy) + 'px';
+            // Píxeles reales movidos
+            const dxPx = (pos.x - startX) / zoomFactor;
+            const dyPx = (pos.y - startY) / zoomFactor;
+            
+            // Convertir a porcentajes
+            const dxPercent = (dxPx / 600) * 100;
+            const dyPercent = (dyPx / 900) * 100;
+            
+            // Actualizar coordenadas en %
+            dragElement.style.left = (initialLeft + dxPercent) + '%';
+            dragElement.style.top = (initialTop + dyPercent) + '%';
         }
     }
 
@@ -141,29 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (dragElement) dragElement = null; 
     }
 
-    // Escuchamos los movimientos en todo el documento para que no se pierda el rastro si el dedo sale del lienzo
+    // LISTENER ÚNICOS DE ARRASTRE (Eliminamos los duplicados que tenías)
     document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('touchmove', handleDragMove, { passive: false }); // passive: false es necesario para usar preventDefault()
+    document.addEventListener('touchmove', handleDragMove, { passive: false });
     document.addEventListener('mouseup', handleDragEnd);
     document.addEventListener('touchend', handleDragEnd);
 
-    document.addEventListener('mousemove', function(e) {
-        if (dragElement && !dragElement.classList.contains('text-typing')) {
-            const transformStr = flyerCanvas.style.transform || '';
-            const match = transformStr.match(/scale\(([^)]+)\)/);
-            const zoomFactor = match ? parseFloat(match[1]) : 1;
 
-            const dx = (e.clientX - startX) / zoomFactor;
-            const dy = (e.clientY - startY) / zoomFactor;
-            
-            dragElement.style.left = (initialLeft + dx) + 'px';
-            dragElement.style.top = (initialTop + dy) + 'px';
-        }
-    });
-
-    document.addEventListener('mouseup', function() {
-        if (dragElement) dragElement = null; 
-    });
 
     // =========================================
     // --- CONEXIÓN DE BARRA DE HERRAMIENTAS ---
@@ -231,22 +221,25 @@ function previewFlyer(roundName) {
     contentArea.innerHTML = ''; 
 
     if(!matches || matches.length === 0) {
-        addTextToFlyer("No hay partidos programados", 50, 50, 'flyer-free-text', 2.5);
+        // También bajamos el texto de "No hay partidos" al 60% para dejar margen arriba
+        addTextToFlyer("No hay partidos programados", 50, 60, 'flyer-free-text', 2.5);
     } else {
         // --- ALGORITMO DINÁMICO DE ESPACIADO Y ESCALADO ---
         const count = matches.length;
-        let startY = 15;  
-        let stepY = 26;   
+        let startY = 25;  // Margen superior por defecto más amplio
+        let stepY = 20;   
         let scale = 1;    
 
-        if (count === 1) { startY = 50; stepY = 0; scale = 1.3; }
-        else if (count === 2) { startY = 30; stepY = 40; scale = 1.1; }
-        else if (count === 3) { startY = 20; stepY = 30; scale = 1.0; }
-        else if (count === 4) { startY = 15; stepY = 23; scale = 0.9; }
-        else if (count === 5) { startY = 12; stepY = 19; scale = 0.75; }
-        else if (count >= 6) { startY = 10; stepY = 85 / count; scale = 0.60; } 
+        // Aumentamos startY para dejar aprox el 25% - 30% superior totalmente libre.
+        // Se reduce ligeramente el scale y stepY para que quepan bien abajo.
+        if (count === 1) { startY = 60; stepY = 0; scale = 1.2; }
+        else if (count === 2) { startY = 45; stepY = 30; scale = 1.0; }
+        else if (count === 3) { startY = 35; stepY = 25; scale = 0.9; }
+        else if (count === 4) { startY = 30; stepY = 20; scale = 0.8; }
+        else if (count === 5) { startY = 28; stepY = 16; scale = 0.7; }
+        else if (count >= 6) { startY = 25; stepY = 70 / count; scale = 0.55; } 
 
-        let offsetY = startY; 
+        let offsetY = startY;
         
         matches.forEach(m => {
             if(m.status === 'CANCELLED') return; 
@@ -266,10 +259,10 @@ function previewFlyer(roundName) {
             const logoA = m.logo_a ? `../${m.logo_a}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(m.team_a)}&background=f1f5f9&color=64748b&size=128`;
             const logoB = m.logo_b ? `../${m.logo_b}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(m.team_b)}&background=f1f5f9&color=64748b&size=128`;
 
-            const logoY = offsetY - (8 * scale);
-            const vsY = offsetY - (3 * scale);
-            const timeY = offsetY + (6 * scale);
-            const dateY = offsetY + (11 * scale);
+            const dateY = offsetY - (13 * scale); // Fecha hasta arriba
+            const timeY = offsetY - (10 * scale); // Hora justo debajo de la fecha
+            const logoY = offsetY - (7 * scale);  // Logos más abajo
+            const vsY   = offsetY - (5 * scale);  // VS centrado entre los logos
 
             // Inyectar logos
             addImageToFlyer(logoA, 25, logoY, 80 * scale); 
@@ -538,9 +531,29 @@ function downloadFlyer() {
 
 function changeFlyerBackground(val) {
     const img = document.getElementById('flyer-bg-img'); 
+    const canvas = document.getElementById('flyer-canvas'); 
+    
+    // Forzamos el tamaño del lienzo principal
+    if (canvas) {
+        canvas.style.width = '600px';
+        canvas.style.height = '900px';
+        canvas.style.position = 'relative';
+        canvas.style.overflow = 'hidden';
+    }
+
     if(val) { 
         img.src = val; 
         img.style.display = 'block'; 
+        
+        img.style.position = 'absolute';
+        img.style.top = '0';
+        img.style.left = '0';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        // EL CAMBIO CLAVE: Usamos 'fill' para que la imagen encaje exactamente
+        // en los 600x900 y NUNCA recorte la franja roja de abajo.
+        img.style.objectFit = 'fill'; 
+        img.style.zIndex = '0'; 
     } else { 
         img.removeAttribute('src'); 
         img.style.display = 'none'; 

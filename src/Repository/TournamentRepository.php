@@ -296,5 +296,29 @@ class TournamentRepository {
         return $this->createRound($tournamentId, $name, $order);
     }
     
+    // --- ACTUALIZA LA BASE DE DATOS PARA FIJAR EL TORNEO ---
+    public function setDefaultTournament(int $id): void {
+        // 1. Le quitamos la marca de "por defecto" a todos los torneos
+        $result = $this->db->query("UPDATE tournaments SET is_default = 0");
+        if (!$result) throw new Exception("Error DB limpiando defaults: " . $this->db->error);
+        
+        // 2. Se la ponemos únicamente al que el usuario seleccionó
+        $stmt = $this->db->prepare("UPDATE tournaments SET is_default = 1 WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB seteando default: " . $this->db->error);
+        
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
+    public function togglePublicTournament(int $id, int $newState): void {
+        $stmt = $this->db->prepare("UPDATE tournaments SET is_public = ? WHERE id = ?");
+        if (!$stmt) throw new Exception("Error DB visibilidad: " . $this->db->error);
+        
+        $stmt->bind_param("ii", $newState, $id);
+        $stmt->execute();
+        $stmt->close();
+    }
+    
 }
 ?>

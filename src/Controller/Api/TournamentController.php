@@ -289,5 +289,34 @@ class TournamentController extends BaseController {
             Response::error('Error creando partido manual', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    
+    // --- ESTABLECER TORNEO POR DEFECTO PARA LA WEB PÚBLICA ---
+    public function setDefaultTournament($input) {
+        $id = $input['id'] ?? null;
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
+
+        try {
+            $this->repo->setDefaultTournament((int)$id);
+            Response::success('Torneo fijado en la página pública exitosamente');
+        } catch (Exception $e) {
+            Logger::write("Error en setDefaultTournament: " . $e->getMessage());
+            Response::error('Error al actualizar el torneo por defecto', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    public function togglePublic($input) {
+        $id = $input['id'] ?? null;
+        $state = $input['state'] ?? 0;
+        $this->validate(['id' => $id], ['id' => 'required|integer']);
+
+        try {
+            $this->repo->togglePublicTournament((int)$id, (int)$state);
+            $msg = $state == 1 ? 'Torneo ahora es visible al público' : 'Torneo oculto del público';
+            Response::success($msg);
+        } catch (Exception $e) {
+            Logger::write("Error en togglePublic: " . $e->getMessage());
+            Response::error('Error al actualizar visibilidad', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 ?>

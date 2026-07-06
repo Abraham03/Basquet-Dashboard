@@ -148,13 +148,13 @@
             <div class="col-lg-6">
                 <div class="stat-card">
                     <h6 class="fw-bold mb-3 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-trophy me-2"></i>MVP Race (Puntos Totales)</h6>
-                    <div id="scorersList" class="d-flex flex-column gap-2 mt-3"></div>
+                    <div id="scorersList" class="d-flex flex-column gap-2 mt-3 scrollable-list"></div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="stat-card">
                     <h6 class="fw-bold mb-3 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-bullseye me-2"></i>Líderes de 3 Puntos</h6>
-                    <div id="triplesList" class="d-flex flex-column gap-2 mt-3"></div>
+                    <div id="triplesList" class="d-flex flex-column gap-2 mt-3 scrollable-list"></div>
                 </div>
             </div>
         </div>
@@ -169,7 +169,7 @@
             <div class="col-lg-6">
                 <div class="stat-card d-flex flex-column">
                     <h6 class="fw-bold mb-4 text-uppercase small" style="color: var(--text-muted);"><i class="bi bi-shield-lock me-2"></i>Muro Defensivo (Prom. Recibido)</h6>
-                    <div class="table-responsive flex-grow-1">
+                    <div class="table-responsive flex-grow-1 scrollable-list">
                         <table class="table table-pro mb-0">
                             <thead class="table-light"><tr><th>Equipo</th><th class="text-end">Recibe</th></tr></thead>
                             <tbody id="defenseBody"></tbody>
@@ -206,6 +206,20 @@
                             </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="playerPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <div class="modal-header border-0 pb-0 justify-content-end">
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1) grayscale(100%) brightness(200%);"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <img id="enlargedPlayerPhoto" src="" class="img-fluid rounded-4 shadow-lg" alt="Foto del jugador" style="max-height: 70vh; object-fit: cover; border: 4px solid white; background: var(--bg-body);">
+                <h4 id="enlargedPlayerName" class="text-white mt-3 fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></h4>
             </div>
         </div>
     </div>

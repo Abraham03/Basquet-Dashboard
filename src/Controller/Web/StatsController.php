@@ -97,13 +97,13 @@ class StatsController {
             $standings = $stmtSt->get_result()->fetch_all(MYSQLI_ASSOC);
 
             // 3. Top Anotadores
-            $scorers = $this->queryAll("SELECT p.name, p.photo_url, SUM(sl.points_scored) as total_points, t.short_name as team FROM score_logs sl JOIN fixtures f ON sl.match_id = f.match_id JOIN players p ON sl.player_id = p.id JOIN teams t ON p.team_id = t.id WHERE f.tournament_id = $id GROUP BY sl.player_id ORDER BY total_points DESC LIMIT 5");
+            $scorers = $this->queryAll("SELECT p.name, p.photo_url, SUM(sl.points_scored) as total_points, t.short_name as team FROM score_logs sl JOIN fixtures f ON sl.match_id = f.match_id JOIN players p ON sl.player_id = p.id JOIN teams t ON p.team_id = t.id WHERE f.tournament_id = $id GROUP BY sl.player_id ORDER BY total_points DESC LIMIT 50");
 
             // 4. Top Triples
-            $triples = $this->queryAll("SELECT p.name, p.photo_url, COUNT(*) as triples_made, t.short_name as team FROM score_logs sl JOIN fixtures f ON sl.match_id = f.match_id JOIN players p ON sl.player_id = p.id JOIN teams t ON p.team_id = t.id WHERE f.tournament_id = $id AND sl.points_scored = 3 GROUP BY sl.player_id ORDER BY triples_made DESC LIMIT 5");
+            $triples = $this->queryAll("SELECT p.name, p.photo_url, COUNT(*) as triples_made, t.short_name as team FROM score_logs sl JOIN fixtures f ON sl.match_id = f.match_id JOIN players p ON sl.player_id = p.id JOIN teams t ON p.team_id = t.id WHERE f.tournament_id = $id AND sl.points_scored = 3 GROUP BY sl.player_id ORDER BY triples_made DESC LIMIT 50");
 
             // 5. Mejores Defensas
-            $defense = $this->queryAll("SELECT t.name as team, t.logo_url, (SUM(CASE WHEN m.team_a_id = t.id THEN m.score_b ELSE m.score_a END) / COUNT(m.id)) as avg_allowed FROM teams t JOIN tournament_teams tt ON t.id = tt.team_id JOIN fixtures f ON (t.id = f.team_a_id OR t.id = f.team_b_id) AND f.tournament_id = $id AND f.status = 'FINISHED' JOIN matches m ON f.match_id = m.id GROUP BY t.id ORDER BY avg_allowed ASC LIMIT 5");
+            $defense = $this->queryAll("SELECT t.name as team, t.logo_url, (SUM(CASE WHEN m.team_a_id = t.id THEN m.score_b ELSE m.score_a END) / COUNT(m.id)) as avg_allowed FROM teams t JOIN tournament_teams tt ON t.id = tt.team_id JOIN fixtures f ON (t.id = f.team_a_id OR t.id = f.team_b_id) AND f.tournament_id = $id AND f.status = 'FINISHED' JOIN matches m ON f.match_id = m.id GROUP BY t.id ORDER BY avg_allowed ASC LIMIT 25");
 
             // 6. Puntos por Periodo
             $periods = $this->queryAll("SELECT period, SUM(points_scored) as total FROM score_logs sl JOIN fixtures f ON sl.match_id = f.match_id WHERE f.tournament_id = $id GROUP BY period ORDER BY period ASC");

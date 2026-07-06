@@ -26,7 +26,7 @@ if ($team_id === 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Denegado | Basket Pro</title>
+    <title>Acceso Denegado | VanBall</title>
     
     <link rel="icon" type="image/x-icon" href="/assets/imagenes/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -93,24 +93,23 @@ if ($team_id === 0) {
             position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
             background-color: var(--sidebar-bg); z-index: 1100;
             transition: transform var(--transition-speed) ease;
-            overflow-y: auto; display: flex; flex-direction: column;
+            overflow-y: hidden;
+        }
+        
+        #sidebar-wrapper .nav {
+            flex-grow: 1;
+            overflow-y: auto;
         }
 
         #page-content-wrapper {
             width: 100%; padding-left: var(--sidebar-width);
             transition: padding var(--transition-speed) ease; min-height: 100vh;
+            display: flex; 
+            flex-direction: column;
         }
 
         body.toggled #sidebar-wrapper { transform: translateX(calc(-1 * var(--sidebar-width))); }
         body.toggled #page-content-wrapper { padding-left: 0; }
-
-        @media (max-width: 768px) {
-            #page-content-wrapper { padding-left: 0; }
-            #sidebar-wrapper { transform: translateX(calc(-1 * var(--sidebar-width))); }
-            body.toggled #sidebar-wrapper { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-            #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 1050; }
-            body.toggled #sidebar-overlay { display: block; }
-        }
 
         /* --- Sidebar UI --- */
         .sidebar-header { padding: 2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -133,13 +132,52 @@ if ($team_id === 0) {
 
         /* Perfil del Equipo */
         .team-profile-logo {
-            width: 150px; height: 150px; object-fit: contain;
+            width: 140px; height: 140px; object-fit: contain;
             border-radius: 20px; border: 2px dashed #cbd5e1;
             padding: 10px; background: white; transition: all 0.3s;
         }
         .team-profile-logo:hover { border-color: var(--primary-color); background: #fffaf9; cursor: pointer; }
         .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; opacity: 0; transition: 0.3s; cursor: pointer; }
         .logo-container:hover .upload-overlay { opacity: 1; }
+        /* Footer pegajoso (Sticky) */
+        .footer-sticky {
+            position: sticky;
+            bottom: 0;
+            z-index: 1020; /* Mantiene el footer por encima del contenido que se desplaza */
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05); /* Agrega una sutil sombra hacia arriba para separarlo del contenido */
+        }
+        
+        .logout-btn { 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+            padding: 1.5rem;
+            background-color: var(--sidebar-bg); 
+            z-index: 10;
+        }
+        /* --- MEDIA QUERIES RESPONSIVAS --- */
+        @media (max-width: 768px) {
+            #page-content-wrapper { padding-left: 0; }
+            #sidebar-wrapper { transform: translateX(calc(-1 * var(--sidebar-width))); }
+            body.toggled #sidebar-wrapper { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            #sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 1050; }
+            body.toggled #sidebar-overlay { display: block; }
+            
+            /* Mejoras de UX en Móvil */
+            .main-content-container { padding: 1rem !important; }
+            .card { border-radius: 12px; }
+            .team-profile-logo { width: 120px; height: 120px; }
+            h3.fw-bold { font-size: 1.5rem; }
+            .table-responsive { border-radius: 12px; }
+            .btn-action-group { padding: 2px; }
+            
+            /* Botones 100% ancho en formularios pequeños */
+            .btn-mobile-full { width: 100%; margin-top: 10px; }
+        }
+
+        @media (max-width: 576px) {
+            .table thead th { padding: 0.75rem 0.5rem; font-size: 0.65rem; }
+            .table tbody td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
+            .badge { font-size: 0.7rem !important; }
+        }
     </style>
 </head>
 <body>
@@ -149,7 +187,10 @@ if ($team_id === 0) {
 <div id="wrapper">
     <div id="sidebar-wrapper">
         <div class="sidebar-header">
-            <span class="sidebar-brand"><i class="bi bi-basket2-fill text-warning me-2"></i>BASKET PRO</span>
+            <span class="sidebar-brand d-flex align-items-center">
+                <img src="../assets/imagenes/Logo.png" alt="Logo" style="height: 32px; width: auto; margin-right: 12px;">
+                VanBall
+            </span>
             <button class="btn btn-link text-white d-md-none p-0" onclick="toggleMenu()"><i class="bi bi-x-lg fs-4"></i></button>
         </div>
         <div class="nav flex-column mt-4">
@@ -169,39 +210,39 @@ if ($team_id === 0) {
     </div>
 
     <div id="page-content-wrapper">
-        <nav class="navbar navbar-expand navbar-light bg-white border-bottom px-4 py-3 sticky-top shadow-sm">
+        <nav class="navbar navbar-expand navbar-light bg-white border-bottom px-3 px-md-4 py-3 sticky-top shadow-sm">
             <button class="btn btn-light rounded-circle shadow-sm me-3" id="menu-toggle"><i class="bi bi-list fs-4"></i></button>
             <h5 class="mb-0 fw-bold d-none d-sm-block">Gestión Deportiva</h5>
-            <div class="ms-auto d-flex align-items-center gap-3">
-                <span class="fw-bold text-muted small">Hola, <?php echo htmlspecialchars($user_name); ?></span>
-                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; font-weight: 700;">C</div>
+            <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                <span class="fw-bold text-muted small d-none d-md-inline">Hola, <?php echo htmlspecialchars($user_name); ?></span>
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-weight: 700;">C</div>
             </div>
         </nav>
 
-        <div class="container-fluid p-4 max-w-1200" style="max-width: 1200px;">
+        <div class="container-fluid p-3 p-md-4 max-w-1200 main-content-container" style="max-width: 1200px;">
             <div class="tab-content">
                 
                 <div class="tab-pane fade show active" id="tab-my-team">
-                    <div class="mb-4">
+                    <div class="mb-3 mb-md-4">
                         <h3 class="fw-bold mb-1" id="displayTeamName">Cargando Equipo...</h3>
-                        <p class="text-muted mb-0">Actualiza la identidad e información general de tu club.</p>
+                        <p class="text-muted mb-0 small text-md-base">Actualiza la identidad e información general de tu club.</p>
                     </div>
 
-                    <div class="card p-4 p-md-5">
+                    <div class="card p-3 p-md-5">
                         <form id="formMyTeam" enctype="multipart/form-data">
                             <input type="hidden" name="id" value="<?php echo $team_id; ?>">
                             
                             <div class="row align-items-center">
-                                <div class="col-md-4 col-lg-3 text-center mb-4 mb-md-0">
+                                <div class="col-12 col-md-4 col-lg-3 text-center mb-4 mb-md-0 d-flex flex-column align-items-center">
                                     <div class="position-relative d-inline-block logo-container shadow-sm rounded-4" onclick="document.getElementById('logoInput').click()">
                                         <img id="previewLogo" src="https://placehold.co/150?text=Logo" class="team-profile-logo">
                                         <div class="upload-overlay"><i class="bi bi-camera fs-2"></i></div>
                                     </div>
                                     <input type="file" name="logo" id="logoInput" class="d-none" accept="image/*" onchange="previewImage(this)">
-                                    <p class="small text-muted mt-2 mb-0">Click para cambiar logo</p>
+                                    <p class="small text-muted mt-2 mb-0">Toca para cambiar logo</p>
                                 </div>
                                 
-                                <div class="col-md-8 col-lg-9">
+                                <div class="col-12 col-md-8 col-lg-9">
                                     <div class="row g-3">
                                         <div class="col-12">
                                             <div class="form-floating">
@@ -209,13 +250,13 @@ if ($team_id === 0) {
                                                 <label>Nombre Oficial del Equipo</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-12 col-md-6">
                                             <div class="form-floating">
                                                 <input type="text" name="shortName" id="team_short" class="form-control text-uppercase" placeholder="Abrev" maxlength="5">
                                                 <label>Abreviatura (Ej: LAL)</label>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-12 col-md-6">
                                             <div class="form-floating">
                                                 <input type="text" name="coachName" id="team_coach" class="form-control" placeholder="Entrenador" value="<?php echo htmlspecialchars($user_name); ?>">
                                                 <label>Entrenador Principal</label>
@@ -223,8 +264,8 @@ if ($team_id === 0) {
                                         </div>
                                     </div>
 
-                                    <div class="text-end mt-4 pt-3 border-top">
-                                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm" id="btnSaveTeam">
+                                    <div class="text-md-end text-center mt-4 pt-3 border-top">
+                                        <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-sm btn-mobile-full" id="btnSaveTeam">
                                             <i class="bi bi-check2-circle me-2"></i>Guardar Cambios
                                         </button>
                                     </div>
@@ -235,22 +276,28 @@ if ($team_id === 0) {
                 </div>
 
                 <div class="tab-pane fade" id="tab-my-players">
-                    <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-end mb-3 mb-md-4 gap-3">
                         <div>
                             <h3 class="fw-bold mb-1">Mis Jugadores</h3>
-                            <p class="text-muted mb-0">Administra el roster o plantilla de tu equipo.</p>
+                            <p class="text-muted mb-0 small text-md-base">Administra el roster o plantilla de tu equipo.</p>
                         </div>
-                        <button class="btn btn-primary rounded-pill px-4 shadow" onclick="openPlayerModal()">
+                        <button class="btn btn-primary rounded-pill px-4 shadow w-100 w-sm-auto" onclick="openPlayerModal()">
                             <i class="bi bi-person-plus-fill me-2"></i>Agregar Jugador
                         </button>
                     </div>
                     
                     <div class="card overflow-hidden">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead><tr><th class="ps-4">Número de jugador</th><th>Jugador</th><th class="text-end pe-4">Acciones</th></tr></thead>
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-3 ps-md-4">Número</th>
+                                        <th>Jugador</th>
+                                        <th class="text-end pe-3 pe-md-4">Acciones</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="tableMyPlayers">
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -258,24 +305,43 @@ if ($team_id === 0) {
 
             </div>
         </div>
+        
+        <footer class="py-3 border-top mt-auto bg-white footer-sticky">
+            <div class="container-fluid px-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                
+                <div class="text-muted" style="font-size: 0.85rem;">
+                    &copy; <?php echo date('Y'); ?> Todos los derechos reservados.
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted" style="font-size: 0.85rem;">Desarrollado por</span>
+                    <a href="https://techsolutions.management/" class="d-flex align-items-center text-decoration-none" target="_blank" rel="noopener" style="opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
+                        <img id="techSolutionsLogo" src="../assets/imagenes/logo2.png" alt="Logo TechSolutions" style="height: 22px; width: auto; margin-right: 6px;">
+                        <span style="color: #212529; font-weight: 700; font-size: 0.95rem; letter-spacing: -0.3px;">TechSolutions</span>
+                    </a>
+                </div>
+
+            </div>
+        </footer>
+        
     </div>
 </div>
 
-<div class="modal fade" id="modalPlayer" tabindex="-1">
+<div class="modal fade modal-fullscreen-sm-down" id="modalPlayer" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <form id="formPlayer" class="modal-content border-0 shadow-lg" enctype="multipart/form-data">
             <input type="hidden" name="id" id="player_id">
             <input type="hidden" name="teamId" value="<?php echo $team_id; ?>">
             
-            <div class="modal-header bg-light">
+            <div class="modal-header bg-light border-bottom-0 pb-3">
                 <h5 class="modal-title fw-bold" id="titlePlayer">Registrar Jugador</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <div class="modal-body p-4">
+            <div class="modal-body p-4 pt-2">
                 <div class="d-flex align-items-center mb-4 p-3 bg-light rounded-3 border">
                     <div class="me-3">
-                        <img id="previewPlayerPhoto" src="https://placehold.co/80?text=Foto" class="rounded-circle object-fit-cover shadow-sm border" style="width: 80px; height: 80px;">
+                        <img id="previewPlayerPhoto" src="https://placehold.co/80?text=Foto" class="rounded-circle object-fit-cover shadow-sm border" style="width: 70px; height: 70px;">
                     </div>
                     <div class="flex-grow-1">
                         <label class="form-label small text-muted fw-bold mb-1">FOTO DE PERFIL (Opcional)</label>
@@ -292,8 +358,8 @@ if ($team_id === 0) {
                     </div>
                     <div class="col-4 col-md-3">
                         <div class="form-floating">
-                            <input type="number" name="number" id="player_num" class="form-control text-center fw-bold fs-5" placeholder="#" min="0" max="99">
-                            <label>Número de jugador</label>
+                            <input type="number" name="number" id="player_num" class="form-control text-center fw-bold fs-5 px-1" placeholder="#" min="0" max="99">
+                            <label class="px-2">Núm</label>
                         </div>
                     </div>
                 </div>
@@ -377,18 +443,18 @@ if ($team_id === 0) {
 
             return `
             <tr>
-                <td class="ps-4"><span class="badge bg-white text-dark border shadow-sm rounded-pill px-3 py-2 fs-6"># ${p.default_number || '?'}</span></td>
+                <td class="ps-3 ps-md-4"><span class="badge bg-white text-dark border shadow-sm rounded-pill px-2 py-1 px-md-3 py-md-2 fs-6"># ${p.default_number || '?'}</span></td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <img src="${photoUrl}" alt="${p.name}" class="rounded-circle me-3 shadow-sm border" style="width: 40px; height: 40px; object-fit: cover;" onerror="this.onerror=null; this.src='https://placehold.co/40?text=U';">
-                        <span class="fw-bold text-dark fs-6">${p.name}</span>
+                        <img src="${photoUrl}" alt="${p.name}" class="rounded-circle me-2 me-md-3 shadow-sm border" style="width: 35px; height: 35px; object-fit: cover;" onerror="this.onerror=null; this.src='https://placehold.co/40?text=U';">
+                        <span class="fw-bold text-dark text-truncate" style="max-width: 130px;">${p.name}</span>
                     </div>
                 </td>
-                <td class="text-end pe-4">
+                <td class="text-end pe-3 pe-md-4">
                     <div class="btn-action-group shadow-sm">
                         <button class="btn btn-icon text-secondary" onclick="editPlayer(${p.id})" data-bs-toggle="tooltip" title="Editar Jugador"><i class="bi bi-pencil"></i></button>
                         <div class="vr my-1 mx-1 text-muted opacity-25"></div>
-                        <button class="btn btn-icon text-danger" onclick="deletePlayer(${p.id})" data-bs-toggle="tooltip" title="Dar de baja"><i class="bi bi-trash"></i></button>
+
                     </div>
                 </td>
             </tr>
@@ -399,7 +465,6 @@ if ($team_id === 0) {
         [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     }
 
-
     // --- GESTIÓN DE FORMULARIOS ---
     function previewImage(input) { 
         if (input.files && input.files[0]) { 
@@ -409,7 +474,6 @@ if ($team_id === 0) {
         } 
     }
 
-    // Nuevo Helper para la foto del jugador
     function previewPlayerImage(input) {
         if (input.files && input.files[0]) { 
             var reader = new FileReader(); 
@@ -422,7 +486,7 @@ if ($team_id === 0) {
         const form = document.getElementById('formPlayer');
         form.reset();
         document.getElementById('player_id').value = '';
-        document.getElementById('previewPlayerPhoto').src = 'https://placehold.co/80?text=Foto'; // Resetear visual de foto
+        document.getElementById('previewPlayerPhoto').src = 'https://placehold.co/80?text=Foto';
         document.getElementById('titlePlayer').innerText = 'Registrar Jugador';
         new bootstrap.Modal(document.getElementById('modalPlayer')).show();
     }
@@ -435,7 +499,6 @@ if ($team_id === 0) {
         document.getElementById('player_name').value = p.name;
         document.getElementById('player_num').value = p.default_number;
 
-        // Cargar la foto actual en el modal
         const img = document.getElementById('previewPlayerPhoto');
         if(img) {
             img.src = p.photo_url ? `../${p.photo_url}` : 'https://placehold.co/80?text=Foto';
@@ -474,8 +537,6 @@ if ($team_id === 0) {
         // 2. Guardar Jugador
         document.getElementById('formPlayer').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // Estado de carga para el botón de jugador ---
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             btn.disabled = true;
@@ -497,14 +558,13 @@ if ($team_id === 0) {
                     Swal.fire('Error', json.message, 'error');
                 }
             } catch (err) { Swal.fire('Error', 'Fallo al procesar jugador.', 'error'); 
-                
             } finally {
-                // Restaurar el botón pase lo que pase ---
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             } 
         });
     }
+    
 
     async function deletePlayer(id) {
         const result = await Swal.fire({
@@ -538,6 +598,10 @@ if ($team_id === 0) {
     }
 
     async function logout() { 
+        // 1. Quitar la clase "toggled" para cerrar el sidebar en móviles
+        document.body.classList.remove("toggled");
+
+        // 2. Mostrar la alerta de confirmación
         const result = await Swal.fire({
             title: '¿Cerrar sesión?',
             icon: 'question',

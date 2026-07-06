@@ -8,7 +8,7 @@ $tournament_id = $_GET['id'] ?? 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rol de juegos | Basket Pro Admin</title>
+    <title>Rol de juegos | VanBall Admin</title>
     
     <link rel="icon" type="image/ico" href="../assets/imagenes/favicon.ico">
     
@@ -172,7 +172,7 @@ $tournament_id = $_GET['id'] ?? 0;
                 
                 <div class="modal-header border-bottom border-secondary bg-black bg-opacity-50 py-3 px-4">
                     <h5 class="modal-title fw-bold text-white mb-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-magic text-info"></i> Creador de Carteleras
+                        <i class="bi bi-magic text-info"></i>
                     </h5>
                     <div class="d-flex gap-3 align-items-center">
                         <div class="d-flex align-items-center gap-2 bg-secondary bg-opacity-25 px-3 py-1 rounded-pill">
@@ -186,7 +186,7 @@ $tournament_id = $_GET['id'] ?? 0;
                             </div>
                         </div>
                         <button class="btn btn-sm btn-info fw-bold text-dark rounded-pill px-3" onclick="addTextToFlyer()">
-                            <i class="bi bi-fonts me-1"></i> Texto
+                            <i class="bi bi-fonts me-1"></i>
                         </button>
                         <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal"></button>
                     </div>
@@ -246,23 +246,21 @@ $tournament_id = $_GET['id'] ?? 0;
         </div>
     </div>
 
-    <footer class="footer-admin">
+    <footer class="footer-admin py-4 border-top mt-auto bg-white">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-bold text-dark" style="font-size: 0.95rem;">
-                    <i class="bi bi-basket2-fill text-primary me-1"></i> Basket Pro
-                </span>
-                <span class="text-muted" style="font-size: 0.85rem;">&copy; <?php echo date('Y'); ?></span>
+            
+            <div class="text-muted" style="font-size: 0.85rem;">
+                &copy; <?php echo date('Y'); ?> Todos los derechos reservados.
             </div>
 
-            <div class="d-flex align-items-center gap-4">
-                <div class="text-muted" style="font-size: 0.8rem;">Versión 1.2</div>
-                <div style="width: 1px; height: 16px; background-color: #e2e8f0;"></div>
-                <a href="https://techsolutions.management/" class="footer-dev-badge" target="_blank" rel="noopener">
-                    <img id="techSolutionsLogo" src="../assets/imagenes/logo2.png" alt="Logo TechSolutions" style="height: 18px; width: auto; margin-right: 4px;">
-                    <span style="color: var(--text-main); font-weight: 700; font-size: 0.9rem; letter-spacing: -0.3px;">TechSolutions</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted" style="font-size: 0.85rem;">Desarrollado por</span>
+                <a href="https://techsolutions.management/" class="d-flex align-items-center text-decoration-none" target="_blank" rel="noopener" style="opacity: 0.9; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">
+                    <img id="techSolutionsLogo" src="../assets/imagenes/logo2.png" alt="Logo TechSolutions" style="height: 22px; width: auto; margin-right: 6px;">
+                    <span style="color: #212529; font-weight: 700; font-size: 0.95rem; letter-spacing: -0.3px;">TechSolutions</span>
                 </a>
             </div>
+
         </div>
     </footer>
 

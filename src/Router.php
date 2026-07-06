@@ -87,6 +87,8 @@ class Router {
                 // --- ACTUALIZACIÓN 
                 case 'update_fixture_teams': (new TournamentController())->updateFixtureTeams($input);break;
                 case 'update_tournament': (new TournamentController())->update($input); break;
+                case 'set_default_tournament': (new TournamentController())->setDefaultTournament($input); break;
+                case 'toggle_public_tournament': (new TournamentController())->togglePublic($input); break; 
                 case 'update_team': (new TeamController())->update($input); break;
                 case 'update_player': (new PlayerController())->update($input); break;    
                 case 'update_fixture_match': (new TournamentController())->updateFixtureMatch($input); break;    

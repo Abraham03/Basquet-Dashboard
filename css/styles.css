@@ -393,3 +393,34 @@ p { color: var(--text-muted); }
     .team-name-card { font-size: 0.75rem; }
     .score-display { font-size: 1.3rem; }
 }
+
+/* Contenedor con Scroll para Listas Top */
+.scrollable-list {
+    max-height: 380px; /* Altura fija (Muestra aprox 5-6 jugadores a la vez) */
+    overflow-y: auto;
+    padding-right: 8px; /* Espacio para que el texto no pegue con la barra */
+}
+
+/* Estilo de la barra de desplazamiento */
+.scrollable-list::-webkit-scrollbar {
+    width: 6px;
+}
+.scrollable-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+.scrollable-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+}
+.scrollable-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary); /* Se pinta naranja al pasar el mouse */
+}
+
+/* Adaptación para Modo Oscuro */
+[data-theme="dark"] .scrollable-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+[data-theme="dark"] .scrollable-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}

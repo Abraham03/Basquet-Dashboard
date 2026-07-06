@@ -106,11 +106,25 @@ function renderRounds(rounds) {
         return;
     }
 
-    let isFirst = true;
-    for (const [roundName, matches] of Object.entries(rounds)) {
+    // 1. Extraer y ordenar las jornadas numéricamente
+    const sortedRoundKeys = Object.keys(rounds).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.replace(/\D/g, '')) || 0;
+        return numA - numB;
+    });
+
+    // 2. Identificar cuál es la última jornada
+    const activeRoundName = sortedRoundKeys[sortedRoundKeys.length - 1];
+
+    // 3. Iterar usando las llaves ya ordenadas
+    for (const roundName of sortedRoundKeys) {
+        const matches = rounds[roundName];
         const safeId = roundName.replace(/[^a-zA-Z0-9]/g, '_');
-        const activeClass = isFirst ? 'active' : '';
-        const showClass = isFirst ? 'show active' : '';
+        
+        // Verificamos si esta jornada es la última para activarla
+        const isActive = (roundName === activeRoundName);
+        const activeClass = isActive ? 'active' : '';
+        const showClass = isActive ? 'show active' : '';
 
         tabsContainer.innerHTML += `
             <button class="nav-link ${activeClass}" data-bs-toggle="pill" data-bs-target="#tab_${safeId}" type="button">${roundName}</button>`;
@@ -195,7 +209,6 @@ function renderRounds(rounds) {
                 </div>
                 <div class="row">${matchesHtml}</div>
             </div>`;
-        isFirst = false;
     }
 
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');

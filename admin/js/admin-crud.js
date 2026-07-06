@@ -5,6 +5,7 @@ let allTournaments = [];
 let allTeams = [];
 let allPlayers = [];
 let filteredPlayers = [];
+let allTournamentTeams = [];
 
 let allUsers = [];
 let pageUsers = 1;
@@ -85,12 +86,15 @@ async function loadTournamentsList() {
             fillTournamentsSelect('selectTournamentForTeam', allTournaments, false);
             
             loadGallery();
+            
+            // NUEVO: Forzamos un repintado de equipos para asegurarnos de que las etiquetas tengan el nombre correcto
+            if(allTeams.length > 0) renderTeamsTable();
         }
     } catch (e) { console.error("Error cargando torneos:", e); }
 }
 
 async function loadFilteredData(tournamentId) {
-    showTableSkeleton('tableTeams', 4);
+    showTableSkeleton('tableTeams', 5);
     showTableSkeleton('tablePlayers', 5);
     
     const subtitle = tournamentId == 0 ? 'Todos los registros' : 'Filtrado por torneo';
@@ -100,12 +104,21 @@ async function loadFilteredData(tournamentId) {
     if(subPlayer) subPlayer.innerText = subtitle;
 
     try {
+        // 1. Traemos los equipos y jugadores filtrados
         const res = await fetch(`${API_URL}?action=get_data_by_tournament&tournament_id=${tournamentId}`);
         const json = await res.json();
-        if (json.status === 'success') {
-            allTeams = json.data.teams;
-            allPlayers = json.data.players;
+        
+        // 2. Traemos silenciosamente los datos generales para obtener las relaciones de torneos
+        const resRel = await fetch(`${API_URL}?action=get_data`);
+        const jsonRel = await resRel.json();
+
+        if (json.status === 'success' && jsonRel.status === 'success') {
+            allTeams = json.data.teams || [];
+            allPlayers = json.data.players || [];
             filteredPlayers = [...allPlayers]; 
+            
+            // ¡AQUÍ ESTÁ LA SOLUCIÓN! Atrapamos las relaciones del endpoint correcto
+            allTournamentTeams = jsonRel.data.tournament_teams || []; 
 
             pageTeams = 1;
             pagePlayers = 1;
@@ -271,16 +284,32 @@ const rowVenueTemplate = (v) => `
 const rowTournamentTemplate = (t) => {
     const imgUrl = t.logo_url ? `../${t.logo_url}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
     
+    // Lógica del torneo por defecto (Estrella)
+    const isDefault = t.is_default == 1;
+    const starClass = isDefault ? 'text-warning' : 'text-secondary';
+    const starIcon = isDefault ? 'bi-star-fill' : 'bi-star';
+    const starTooltip = isDefault ? 'Torneo principal' : 'Fijar como principal';
+
+    // Lógica de visibilidad (Ojito)
+    // Asumimos que si no existe la propiedad is_public, es 1 por defecto
+    const isPublic = t.is_public == undefined ? true : (t.is_public == 1);
+    const eyeClass = isPublic ? 'text-success' : 'text-muted opacity-50';
+    const eyeIcon = isPublic ? 'bi-eye-fill' : 'bi-eye-slash-fill';
+    const eyeTooltip = isPublic ? 'Ocultar del público' : 'Mostrar al público';
+    const badgeHidden = !isPublic ? '<span class="badge bg-secondary ms-2" style="font-size:0.65rem;">Oculto</span>' : '';
+
     return `
-    <tr>
+    <tr class="${!isPublic ? 'opacity-75 bg-light' : ''}">
         <td class="ps-4 text-muted small fw-bold">#${t.id}</td>
         <td>
             <div class="d-flex align-items-center">
                 <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TR';">
                 <span class="fw-bold text-dark">${t.name}</span>
+                ${isDefault ? '<span class="badge bg-warning text-dark ms-2" style="font-size:0.65rem;"><i class="bi bi-star-fill me-1"></i>Principal</span>' : ''}
+                ${badgeHidden}
             </div>
         </td>
-        <td><span class="badge bg-light text-dark border px-3 py-2">${t.category || 'General'}</span></td>
+        <td><span class="badge bg-white text-dark border px-3 py-2">${t.category || 'General'}</span></td>
         
         <td>
             <div class="btn-action-group shadow-sm">
@@ -298,6 +327,12 @@ const rowTournamentTemplate = (t) => {
 
         <td class="text-end pe-4">
             <div class="btn-action-group shadow-sm">
+                <button class="btn btn-icon ${eyeClass}" onclick="togglePublicTournament(${t.id}, ${isPublic ? 0 : 1})" data-bs-toggle="tooltip" title="${eyeTooltip}">
+                    <i class="bi ${eyeIcon}"></i>
+                </button>
+                <button class="btn btn-icon ${starClass}" onclick="setDefaultTournament(${t.id})" data-bs-toggle="tooltip" title="${starTooltip}">
+                    <i class="bi ${starIcon}"></i>
+                </button>
                 <button class="btn btn-icon text-secondary" onclick="editTournament(${t.id})" data-bs-toggle="tooltip" title="Editar Info">
                     <i class="bi bi-pencil"></i>
                 </button>
@@ -309,6 +344,26 @@ const rowTournamentTemplate = (t) => {
     </tr>`;
 };
 
+// --- AGREGAR ESTA FUNCIÓN AL FINAL DEL ARCHIVO ---
+async function togglePublicTournament(id, newState) {
+    try {
+        const res = await fetch(`${API_URL}?action=toggle_public_tournament`, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id: id, state: newState }) 
+        });
+        const json = await res.json();
+        if(json.status === 'success') {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 });
+            loadTournamentsList(); 
+        } else {
+            Swal.fire('Error', json.message, 'error');
+        }
+    } catch(e) {
+        Swal.fire('Error', 'Fallo de conexión.', 'error');
+    }
+}
+
 const rowTeamTemplate = (t) => {
     const imgUrl = t.logo_url ? `../${t.logo_url}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(t.name)}&background=random&color=fff&size=128`;
     
@@ -318,6 +373,21 @@ const rowTeamTemplate = (t) => {
     if (currentFilter != 0) {
         downloadBtn = `<button class="btn btn-icon text-success" onclick="downloadTeamReports(${t.id})" data-bs-toggle="tooltip" title="Descargar Todas las Actas (ZIP)"><i class="bi bi-file-earmark-zip-fill fs-5"></i></button>`;
     }
+    
+    // 1. Buscamos todas las relaciones de este equipo
+    const links = allTournamentTeams.filter(tt => tt.team_id == t.id);
+    
+    // 2. Mapeamos esas relaciones para buscar el nombre real del torneo en allTournaments
+    let tournamentBadges = links.map(link => {
+        const tourney = allTournaments.find(tr => tr.id == link.tournament_id);
+        const tourneyName = tourney ? tourney.name : 'Torneo Desconocido';
+        return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary me-1 mb-1 shadow-sm">${tourneyName}</span>`;
+    }).join('');
+
+    // Si el equipo no está vinculado a ningún torneo, mostramos una etiqueta gris
+    if (!tournamentBadges) {
+        tournamentBadges = '<span class="badge bg-secondary bg-opacity-10 text-secondary border">Sin asignar</span>';
+    }
 
     return `
     <tr>
@@ -326,12 +396,15 @@ const rowTeamTemplate = (t) => {
             <div class="d-flex align-items-center">
                 <img src="${imgUrl}" alt="${t.name}" class="team-logo-table me-3 shadow-sm" onerror="this.onerror=null; this.src='https://placehold.co/48?text=TM';">
                 <div>
-                    <span class="team-name-text">${t.name}</span>
+                    <span class="team-name-text fw-bold d-block text-dark">${t.name}</span>
                     <span class="team-meta-text badge bg-light text-secondary border mt-1">${t.short_name || 'N/A'}</span>
                 </div>
             </div>
         </td>
         <td><div class="text-muted small fw-medium"><i class="bi bi-person-badge me-1 text-primary opacity-50"></i>${t.coach_name || 'Sin coach'}</div></td>
+        
+        <td><div class="d-flex flex-wrap" style="max-width: 250px;">${tournamentBadges}</div></td>
+
         <td class="text-end pe-4">
             <div class="btn-action-group shadow-sm">
                 ${downloadBtn}
@@ -369,6 +442,25 @@ const rowPlayerTemplate = (p) => {
     </tr>`;
 };
 
+// --- FUNCIÓN PARA MANDAR LA SELECCIÓN AL SERVIDOR ---
+async function setDefaultTournament(id) {
+    try {
+        const res = await fetch(`${API_URL}?action=set_default_tournament`, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id: id }) 
+        });
+        const json = await res.json();
+        if(json.status === 'success') {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: json.message, showConfirmButton: false, timer: 3000 });
+            loadTournamentsList(); // Recargamos la tabla para que se ilumine la estrella correcta
+        } else {
+            Swal.fire('Error', json.message, 'error');
+        }
+    } catch(e) {
+        Swal.fire('Error', 'Fallo de conexión.', 'error');
+    }
+}
 
 // --- SWEETALERT FUNCIONES GLOBALES ---
 // --- FUNCIONES PARA LA FOTO DEL JUGADOR ---
@@ -701,7 +793,7 @@ function editTeam(id) {
     if(img) img.src = item.logo_url ? `../${item.logo_url}` : 'https://placehold.co/80?text=Logo';
     
     const currentFilter = document.getElementById('dashboardFilterTournament').value;
-    const selectTourn = document.getElementById('selectTournamentForTeam').disabled = true;
+    const selectTourn = document.getElementById('selectTournamentForTeam').disabled = false;
     if(selectTourn) selectTourn.value = currentFilter;
 
     document.getElementById('titleTeam').innerText = 'Editar Equipo';
